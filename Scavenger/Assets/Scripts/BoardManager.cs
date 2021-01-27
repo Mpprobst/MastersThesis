@@ -51,12 +51,10 @@ namespace Completed
 		{
 			//Clear our list gridPositions.
 			gridPositions.Clear ();
-			levelInfo = new char[columns][];
 
 			//Loop through x axis (columns).
 			for(int x = 1; x < columns-1; x++)
 			{
-				levelInfo[x] = new char[rows];
 				//Within each column, loop through y axis (rows).
 				for(int y = 1; y < rows-1; y++)
 				{
@@ -64,8 +62,6 @@ namespace Completed
 					gridPositions.Add (new Vector3(x, y, 0f));
 				}
 			}
-			levelInfo[1][1] = 'S';
-			levelInfo[columns - 1][rows - 1] = 'G';
 
 		}
 
@@ -88,7 +84,6 @@ namespace Completed
 					//Check if we current position is at board edge, if so choose a random outer wall prefab from our array of outer wall tiles.
 					if (x == -1 || x == columns || y == -1 || y == rows)
 					{
-						levelInfo[x][y] = 'X';
 						toInstantiate = outerWallTiles[Random.Range(0, outerWallTiles.Length)];
 					}
 					
@@ -138,14 +133,29 @@ namespace Completed
 				//Instantiate tileChoice at the position returned by RandomPosition with no change in rotation
 				Instantiate(tileChoice, randomPosition, Quaternion.identity);
 
-				levelInfo[Mathf.RoundToInt(randomPosition.x)][Mathf.RoundToInt(randomPosition.y)] = objectChar;
+				levelInfo[Mathf.RoundToInt(randomPosition.y)][Mathf.RoundToInt(randomPosition.x)] = objectChar;
 			}
 		}
 		
-		
+		private void InitializeLevel()
+        {
+			levelInfo = new char[columns][];
+			for (int i = 0; i < columns; i++)
+			{
+				levelInfo[i] = new char[rows];
+				for (int j = 0; j < rows; j++)
+					levelInfo[i][j] = '-';
+			}
+
+			levelInfo[0][0] = 'S';
+			levelInfo[columns - 1][rows - 1] = 'G';
+		}
+
 		//SetupScene initializes our level and calls the previous functions to lay out the game board
 		public void SetupScene (int level)
 		{
+			InitializeLevel();
+
 			//Creates the outer walls and floor.
 			BoardSetup ();
 			
@@ -170,15 +180,17 @@ namespace Completed
 			string path = Application.persistentDataPath + Path.DirectorySeparatorChar + "level_" + GameManager.instance.level + ".txt";
 			using (FileStream fs = File.Create(path))
 			{
-				for (int i = 0; i < columns; i++)
+				for (int i = columns - 1; i >= 0; i--)
 				{
 					Byte[] info =
 						new UTF8Encoding(true).GetBytes(levelInfo[i]);
 
 					// Add some information to the file.
 					fs.Write(info, 0, info.Length);
+					fs.Write(new UTF8Encoding(true).GetBytes("\n"), 0, 1);	// write nothing to act as a new line
 				}
 			}
+			Debug.Log("Saving level to " + path);
 			using (StreamReader sr = File.OpenText(path))
 			{
 				string s = "";
