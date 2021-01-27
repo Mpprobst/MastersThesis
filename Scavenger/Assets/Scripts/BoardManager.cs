@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using System;
 using System.Collections.Generic; 		//Allows us to use Lists.
-using Random = UnityEngine.Random; 		//Tells Random to use the Unity Engine random number generator.
+using Random = UnityEngine.Random;      //Tells Random to use the Unity Engine random number generator.
+using System.IO;
+using System.Text;
 
 namespace Completed
 	
@@ -38,7 +40,10 @@ namespace Completed
 		public GameObject[] outerWallTiles;								//Array of outer tile prefabs.
 		
 		private Transform boardHolder;									//A variable to store a reference to the transform of our Board object.
-		private List <Vector3> gridPositions = new List <Vector3> ();	//A list of possible locations to place tiles.
+		private List <Vector3> gridPositions = new List <Vector3> ();   //A list of possible locations to place tiles.
+
+		// Matrix that describes the game using characters. S = Start, G = Exit, W = Wall, ' ' = floor, E = enemy, F = food, X = outerwall
+		private char[][] levelInfo;
 		
 		
 		//Clears our list gridPositions and prepares it to generate a new board.
@@ -46,10 +51,12 @@ namespace Completed
 		{
 			//Clear our list gridPositions.
 			gridPositions.Clear ();
-			
+			levelInfo = new char[columns][];
+
 			//Loop through x axis (columns).
 			for(int x = 1; x < columns-1; x++)
 			{
+				levelInfo[x] = new char[rows];
 				//Within each column, loop through y axis (rows).
 				for(int y = 1; y < rows-1; y++)
 				{
@@ -57,9 +64,12 @@ namespace Completed
 					gridPositions.Add (new Vector3(x, y, 0f));
 				}
 			}
+			levelInfo[1][1] = 'S';
+			levelInfo[columns - 1][rows - 1] = 'G';
+
 		}
-		
-		
+
+
 		//Sets up the outer walls and floor (background) of the game board.
 		void BoardSetup ()
 		{
@@ -74,10 +84,13 @@ namespace Completed
 				{
 					//Choose a random tile from our array of floor tile prefabs and prepare to instantiate it.
 					GameObject toInstantiate = floorTiles[Random.Range (0,floorTiles.Length)];
-					
+
 					//Check if we current position is at board edge, if so choose a random outer wall prefab from our array of outer wall tiles.
-					if(x == -1 || x == columns || y == -1 || y == rows)
-						toInstantiate = outerWallTiles [Random.Range (0, outerWallTiles.Length)];
+					if (x == -1 || x == columns || y == -1 || y == rows)
+					{
+						levelInfo[x][y] = 'X';
+						toInstantiate = outerWallTiles[Random.Range(0, outerWallTiles.Length)];
+					}
 					
 					//Instantiate the GameObject instance using the prefab chosen for toInstantiate at the Vector3 corresponding to current grid position in loop, cast it to GameObject.
 					GameObject instance =
@@ -108,7 +121,7 @@ namespace Completed
 		
 		
 		//LayoutObjectAtRandom accepts an array of game objects to choose from along with a minimum and maximum range for the number of objects to create.
-		void LayoutObjectAtRandom (GameObject[] tileArray, int minimum, int maximum)
+		void LayoutObjectAtRandom (GameObject[] tileArray, int minimum, int maximum, char objectChar)
 		{
 			//Choose a random number of objects to instantiate within the minimum and maximum limits
 			int objectCount = Random.Range (minimum, maximum+1);
@@ -124,6 +137,8 @@ namespace Completed
 				
 				//Instantiate tileChoice at the position returned by RandomPosition with no change in rotation
 				Instantiate(tileChoice, randomPosition, Quaternion.identity);
+
+				levelInfo[Mathf.RoundToInt(randomPosition.x)][Mathf.RoundToInt(randomPosition.y)] = objectChar;
 			}
 		}
 		
@@ -138,19 +153,43 @@ namespace Completed
 			InitialiseList ();
 			
 			//Instantiate a random number of wall tiles based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (wallTiles, wallCount.minimum, wallCount.maximum);
+			LayoutObjectAtRandom (wallTiles, wallCount.minimum, wallCount.maximum, 'W');
 			
 			//Instantiate a random number of food tiles based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (foodTiles, foodCount.minimum, foodCount.maximum);
+			LayoutObjectAtRandom (foodTiles, foodCount.minimum, foodCount.maximum, 'F');
 			
 			//Determine number of enemies based on current level number, based on a logarithmic progression
 			int enemyCount = (int)Mathf.Log(level, 2f);
 			
 			//Instantiate a random number of enemies based on minimum and maximum, at randomized positions.
-			LayoutObjectAtRandom (enemyTiles, enemyCount, enemyCount);
+			LayoutObjectAtRandom (enemyTiles, enemyCount, enemyCount, 'E');
 			
 			//Instantiate the exit tile in the upper right hand corner of our game board
 			Instantiate (exit, new Vector3 (columns - 1, rows - 1, 0f), Quaternion.identity);
+
+			string path = Application.persistentDataPath + Path.DirectorySeparatorChar + "level_" + GameManager.instance.level + ".txt";
+			using (FileStream fs = File.Create(path))
+			{
+				for (int i = 0; i < columns; i++)
+				{
+					Byte[] info =
+						new UTF8Encoding(true).GetBytes(levelInfo[i]);
+
+					// Add some information to the file.
+					fs.Write(info, 0, info.Length);
+				}
+			}
+			using (StreamReader sr = File.OpenText(path))
+			{
+				string s = "";
+				while ((s = sr.ReadLine()) != null)
+				{
+					Console.WriteLine(s);
+				}
+			}
+
 		}
+
+
 	}
 }
