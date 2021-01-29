@@ -8,6 +8,7 @@ public class StringEvent : UnityEvent<string> { }
 public class LevelButton : MonoBehaviour
 {
     [System.NonSerialized] public StringEvent pressedEvent;
+    public Text levelName;
 
     private string levelPath;
     private Button button;
@@ -15,8 +16,10 @@ public class LevelButton : MonoBehaviour
     public void Initialize(string path)
     {
         button = GetComponent<Button>();
+        button.onClick = new Button.ButtonClickedEvent();
         button.onClick.AddListener(Pressed);
         levelPath = path;
+        levelName.text = System.IO.Path.GetFileNameWithoutExtension(path);
     }
 
     // Update is called once per frame

@@ -109,7 +109,7 @@ public class GameManager : MonoBehaviour
 
 
 	//Hides black image used between levels
-	void HideLevelImage()
+	public void HideLevelImage()
 	{
 		//Disable the levelImage gameObject.
 		levelImage.SetActive(false);

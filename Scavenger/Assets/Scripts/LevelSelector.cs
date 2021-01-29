@@ -12,10 +12,12 @@ public class LevelSelector : MonoBehaviour
     public Text levelPathDisplay;
     private LevelButton[] levelButtons;
     private BoardManager boardManager;
+    private InputField inputField;
 
     private string levelDirectoryPath;
     private string prefsPath;
     private string[] levelPaths;
+    private int numLevelOptions = 3;
 
     // Start is called before the first frame update
     public void Initialize()
@@ -30,38 +32,45 @@ public class LevelSelector : MonoBehaviour
                 Directory.CreateDirectory(levelDirectoryPath);
             }
 
-           SavePrefs();
+            SavePrefs();
         }
+
+        inputField = GameObject.FindObjectOfType<InputField>();
+        inputField.onEndEdit = new InputField.SubmitEvent();
+        inputField.onEndEdit.AddListener(ChangeLevelsDirectory);
 
         ReadPrefs();
 
+        SetupButtons();
+    }
+
+    private void SetupButtons()
+    {
         // Get level files
         DirectoryInfo levelDir = new DirectoryInfo(levelDirectoryPath);
         FileInfo[] allLevelFiles = levelDir.GetFiles();
-        int[] fileIndicies = new int[3];
-        levelPaths = new string[3];
+        List<FileInfo> fileList = new List<FileInfo>();
+        for (int i = 0; i < allLevelFiles.Length; i++)
+            fileList.Add(allLevelFiles[i]);
 
-        for (int i = 0; i < fileIndicies.Length; i++)
+        levelPaths = new string[numLevelOptions];
+
+        for (int i = 0; i < numLevelOptions; i++)
         {
-            fileIndicies[i] = Random.Range(0, allLevelFiles.Length);
-            levelPaths[i] = allLevelFiles[fileIndicies[i]].FullName;
+            int randomFileIndex = Random.Range(0, fileList.Count);
+            levelPaths[i] = fileList[randomFileIndex].FullName;
+            fileList.RemoveAt(randomFileIndex);
         }
 
         // Wire up buttons to load levels
         boardManager = GameObject.FindObjectOfType<BoardManager>();
-        levelButtons = GetComponentsInChildren<LevelButton>();  
+        levelButtons = GetComponentsInChildren<LevelButton>();
         for (int i = 0; i < levelButtons.Length; i++)
         {
             levelButtons[i].Initialize(levelPaths[i]);
             levelButtons[i].pressedEvent = new StringEvent();
             levelButtons[i].pressedEvent.AddListener(boardManager.LoadLevelFromText);
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     private void ReadPrefs()
@@ -74,7 +83,6 @@ public class LevelSelector : MonoBehaviour
             {
                 levelDirectoryPath += s;
             }
-            Debug.Log("Loading levels from " + levelDirectoryPath);
         }
         UpdateUI();
 
@@ -82,6 +90,7 @@ public class LevelSelector : MonoBehaviour
 
     private void SavePrefs()
     {
+        File.Delete(prefsPath);
         using (FileStream fs = File.Create(prefsPath))
         {
             Byte[] info = new UTF8Encoding(true).GetBytes(levelDirectoryPath);
@@ -100,6 +109,7 @@ public class LevelSelector : MonoBehaviour
             Directory.CreateDirectory(levelDirectoryPath);
         }
         SavePrefs();
+        SetupButtons();
         UpdateUI();
     }
 

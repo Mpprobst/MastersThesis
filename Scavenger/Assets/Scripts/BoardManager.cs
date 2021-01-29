@@ -148,26 +148,54 @@ public class BoardManager : MonoBehaviour
 
 	public void LoadLevelFromText(string pathToFile)
 	{
-		Debug.Log("LoadLevelFromText");
-		objectDictionary = new Dictionary<char, GameObject[]>();
 		GameObject[] exitArray = new GameObject[1];
 		exitArray[0] = exit;
+		objectDictionary = new Dictionary<char, GameObject[]>();
 		objectDictionary.Add('G', exitArray);
 		objectDictionary.Add('F', foodTiles);
 		objectDictionary.Add('E', enemyTiles);
 		objectDictionary.Add('W', wallTiles);
 
+		InitializeLevel();
+
 		if (File.Exists(pathToFile))
 		{
 			using (StreamReader sr = File.OpenText(pathToFile))
 			{
+				// TODO: Put the string into the levelInfo, then populate the level
 				string s = "";
+				int rowIndex = rows -1;
 				while ((s = sr.ReadLine()) != null)
 				{
-					Debug.Log(s);
+					for (int i = 0; i < s.Length; i++)
+                    {
+						levelInfo[rowIndex][i] = s[i];
+                    }
+					rowIndex--;
+
 				}
 			}
 		}
+
+		// Level info loaded, now populate level
+		BoardSetup();
+
+		InitialiseList();
+
+		for (int x = 0; x < columns; x++)
+        {
+			for (int y = 0; y < rows; y++)
+            {
+				if (objectDictionary.ContainsKey(levelInfo[x][y]))
+				{
+					GameObject[] tileArray = objectDictionary[levelInfo[x][y]];
+					GameObject tile = tileArray[Random.Range(0, tileArray.Length)];
+					Instantiate(tile, new Vector3((float)y, (float)x, 0f), Quaternion.identity);
+				}
+            }
+        }
+
+		GameManager.instance.HideLevelImage();
 	}
 
 	//SetupScene initializes our level and calls the previous functions to lay out the game board
