@@ -14,7 +14,7 @@ class Wall(tile.Tile):
 
     def interact(self):
         self.health -= 1
-        if health <= 0:
+        if self.health <= 0:
             self.icon = '-'
             return True
 
