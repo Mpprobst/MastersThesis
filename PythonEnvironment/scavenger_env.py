@@ -10,8 +10,8 @@ from tiles import wall
 from tiles import goal
 
 
-MOVE_FACTORS = { 'U' : (1, 0),
-                 'D' : (-1, 0),
+MOVE_FACTORS = { 'U' : (-1, 0),
+                 'D' : (1, 0),
                  'L' : (0, -1),
                  'R' : (0, 1) }
 
@@ -25,7 +25,7 @@ class ScavengerEnv():
     def __init__(self, file):
         self.level_width = 8    # number of columns in the level space (x dirextion)
         self.level_height = 8   # number of rows in the level space (y direction)
-        self.level = []     # matrix containing level information
+        self.level = []     # matrix containing level information. SHOULD BE INDEXED (y, x)
         self.player_points = 20
         self.player_position = (0, self.level_height-1)
         self.goal_position = (self.level_width-1, self.level_height-1)
@@ -48,15 +48,15 @@ class ScavengerEnv():
                     tile = wall.Wall(char)
                 elif char == 'F':
                     tile = floor.Floor('F')
-                    self.food_positions.append((len(level_row), len(self.level)))
+                    self.food_positions.append((len(self.level), len(level_row)))
                 elif char == 'E':
                     tile = floor.Floor('E')
-                    self.enemy_positions.append((len(level_row), len(self.level)))
+                    self.enemy_positions.append((len(self.level), len(level_row)))
                 elif char == 'G':
                     tile = goal.Goal('G')
                 elif char == 'S':
                     tile = floor.Floor('-')
-                    self.player_position = (len(level_row), len(self.level))
+                    self.player_position = (len(self.level), len(level_row))
 
                 if tile == None:
                     print(f'Tile type {char} undetermined')
@@ -64,17 +64,18 @@ class ScavengerEnv():
                     level_row.append(tile)
             self.level.append(level_row)
 
-        self.print_env()
+        #self.print_env()
 
     def print_env(self):
-        print(f'player pos {self.player_position}')
+        print(f'player pos: ({self.player_position[1]}, {self.player_position[0]})')
         for i in range(len(self.level)):
             row = self.level[i]
             row_string = ""
             for j in range(len(row)):
-                if (j,i) == self.player_position:
+                if (i,j) == self.player_position:
                     row_string += 'A'
-                row_string += row[j].get_icon()
+                else:
+                    row_string += row[j].get_icon()
             print(row_string)
     # Given a move from the agent, adjust the environment
     # Potential moves are : U, D, L, R for Up, Down, Left, and Right movement
@@ -107,8 +108,10 @@ class ScavengerEnv():
 
         # enemy turn
         if self.turn == 0:
-            for enemy in self.enemy_positions:
-                print(f'enemy at {enemy}')
+            print("enemies move...")
+            #print(f'enemy positions: {self.enemy_positions}')
+            for i in range(len(self.enemy_positions)):
+                enemy = self.enemy_positions[i]
                 # if enemy is adjacent to player, attack. Otherwise, move
                 distance = ((enemy[0] - self.player_position[0]), (enemy[1] - self.player_position[1]))
                 if (distance[0] == 0 or distance[1] == 0) and (distance[0] == 1 or distance[1] == 1):
@@ -117,17 +120,25 @@ class ScavengerEnv():
                 else:
                     enemy_move = (0, 0)
                     # enemies move in Y direction if not on same row as player.
-                    if enemy[1] != self.player_position[1]:
-                        enemy_move = (0, 1) if enemy[1] < self.player_position[1] else (0, -1)
+                    if enemy[0] != self.player_position[0]:
+                        enemy_move = (1, 0) if enemy[0] < self.player_position[0] else (-1, 0)
                     # otherwise, move in the X direction toward the player
                     else:
-                        enemy_move = (1, 0) if enemy[0] < self.player_position[0] else (-1, 0)
+                        enemy_move = (0, 1) if enemy[1] < self.player_position[1] else (0, -1)
+
+                    # ensure Enemies don't occupy the same space
 
                     self.level[enemy[0]][enemy[1]].has_enemy = False
-                    enemy = ((enemy[0] + enemy_move[0]),(enemy[1] + enemy_move[1]))
+                    enemy_pos = ((enemy[0] + enemy_move[0]),(enemy[1] + enemy_move[1]))
+                    #print(f'enemy move: {enemy_move} new pos: {enemy_pos}')
+
+                    if enemy_pos in self.enemy_positions:
+                        enemy_pos = enemy
+                        #print(f'cannot stand on another. New pos: {enemy_pos}')
+                    enemy = enemy_pos
                     self.level[enemy[0]][enemy[1]].has_enemy = True
 
-
+                    self.enemy_positions[i] = enemy
             self.turn = 2
 
         self.player_points += points
@@ -144,7 +155,7 @@ class ScavengerEnv():
             if y >= self.level_height or y < 0:
                 y = self.player_position[1]
             next_pos = (x,y)
-
+            print(f'({y}, {x}) if move {factor}')
             tiles.append(self.level[next_pos[0]][next_pos[1]])
 
         return tiles

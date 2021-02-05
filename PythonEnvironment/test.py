@@ -15,7 +15,9 @@ points = 20
 
 agent = RandomAgent(points)
 while (not env.done and move_count < 50 and points > 0):
-    move = agent.suggest_move(env)
-    points += env.move(move)
-    print(f'moved {move}. points: {points}')
+    print(f'points: {points}')
     env.print_env()
+    move = agent.suggest_move(env)
+    print(f'player move {move}')
+    points += env.move(move)
+    print("")
