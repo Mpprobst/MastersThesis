@@ -134,12 +134,13 @@ class ScavengerEnv():
             for i in range(len(self.enemy_positions)):
                 enemy = self.enemy_positions[i]
                 enemy_move = (0, 0)
-                # enemies move in Y direction if not on same row as player.
-                if enemy[0] != self.player_position[0]:
-                    enemy_move = (1, 0) if enemy[0] < self.player_position[0] else (-1, 0)
-                # otherwise, move in the X direction toward the player
-                else:
+                # move in the X direction toward the player
+                if enemy[1] != self.player_position[1]:
                     enemy_move = (0, 1) if enemy[1] < self.player_position[1] else (0, -1)
+                # otherwise move in Y direction if not on same row as player.
+                else:
+                    enemy_move = (1, 0) if enemy[0] < self.player_position[0] else (-1, 0)
+
                 enemy_pos = ((enemy[0] + enemy_move[0]),(enemy[1] + enemy_move[1]))
                 #print(f'enemy move: {enemy_move} new pos: {enemy_pos}')
 

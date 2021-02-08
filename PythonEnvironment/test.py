@@ -8,7 +8,7 @@ import scavenger_env as env
 from random_agent import RandomAgent
 from simple_agent import SimpleAgent
 
-filename = "resources/training/level_1.txt"
+filename = "resources/training/level_5.txt"
 env = env.ScavengerEnv(filename)
 
 move_count = 0
