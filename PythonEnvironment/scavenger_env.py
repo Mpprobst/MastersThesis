@@ -15,6 +15,12 @@ MOVE_FACTORS = { 'U' : (-1, 0),
                  'L' : (0, -1),
                  'R' : (0, 1) }
 
+EVENT_CODES = { 'Player Damaged' : 'E',
+                'Wall Destroyed' : 'W',
+                'Food Collected' : 'F',
+                'Player Death' : 'L',
+                'Player Win' : 'V' }
+
 class Player():
     def __init__(self, start_pos):
         self.position = start_pos
@@ -33,6 +39,7 @@ class ScavengerEnv():
         self.enemy_positions = []
         self.turn = 1       # subtracted by 1 each time the player moves. All enemies move when turn == 0
         self.done = False
+        self.events = []
 
         f = open(file, "r")
         for line in f:
@@ -93,15 +100,26 @@ class ScavengerEnv():
             y = self.player_position[1]
         next_pos = (x,y)
         next_tile = self.level[next_pos[0]][next_pos[1]]
-        # interact with the tile
         points = -1
+
+        # check if the next tile is a wall and if it has been destroyed after interacting with it
+        is_wall = isinstance(next_tile, wall.Wall)
+        if is_wall:
+            is_wall = next_tile.health > 0
+
         # if move successful, change player position
         if next_tile.interact():
+            if is_wall:
+                if next_tile.health <= 0:
+                    self.events.append(EVENT_CODES['Wall Destroyed'])
+
             if next_tile.has_food:
+                self.events.append(EVENT_CODES['Food Collected'])
                 points += 20
             self.player_position = next_pos
 
         if self.player_position == self.goal_position:
+            self.events.append(EVENT_CODES['Player Win'])
             self.done = True
             return points
         self.turn -= 1
@@ -112,36 +130,44 @@ class ScavengerEnv():
             #print(f'enemy positions: {self.enemy_positions}')
             for i in range(len(self.enemy_positions)):
                 enemy = self.enemy_positions[i]
-                # if enemy is adjacent to player, attack. Otherwise, move
-                distance = ((enemy[0] - self.player_position[0]), (enemy[1] - self.player_position[1]))
-                if (distance[0] == 0 or distance[1] == 0) and (distance[0] == 1 or distance[1] == 1):
-                    print('enemy attack!')
-                    points -= 20
+                enemy_move = (0, 0)
+                # enemies move in Y direction if not on same row as player.
+                if enemy[0] != self.player_position[0]:
+                    enemy_move = (1, 0) if enemy[0] < self.player_position[0] else (-1, 0)
+                # otherwise, move in the X direction toward the player
                 else:
-                    enemy_move = (0, 0)
-                    # enemies move in Y direction if not on same row as player.
-                    if enemy[0] != self.player_position[0]:
-                        enemy_move = (1, 0) if enemy[0] < self.player_position[0] else (-1, 0)
-                    # otherwise, move in the X direction toward the player
-                    else:
-                        enemy_move = (0, 1) if enemy[1] < self.player_position[1] else (0, -1)
+                    enemy_move = (0, 1) if enemy[1] < self.player_position[1] else (0, -1)
+                enemy_pos = ((enemy[0] + enemy_move[0]),(enemy[1] + enemy_move[1]))
+                #print(f'enemy move: {enemy_move} new pos: {enemy_pos}')
+                
+                # if enemy would move into the player, instead they attack
+                if enemy_pos == self.player_position:
+                    print('enemy attack!')
+                    self.events.append(EVENT_CODES['Player Damaged'])
+                    points -= 20
+                    enemy_pos = enemy
 
-                    # ensure Enemies don't occupy the same space
+                # ensure Enemies don't occupy the same space
+                self.level[enemy[0]][enemy[1]].has_enemy = False
+                if enemy_pos in self.enemy_positions:
+                    enemy_pos = enemy
+                    #print(f'cannot stand on another. New pos: {enemy_pos}')
 
-                    self.level[enemy[0]][enemy[1]].has_enemy = False
-                    enemy_pos = ((enemy[0] + enemy_move[0]),(enemy[1] + enemy_move[1]))
-                    #print(f'enemy move: {enemy_move} new pos: {enemy_pos}')
+                # ensure enemies don't move into a wall
+                if not isinstance(self.level[enemy_pos[0]][enemy_pos[1]], floor.Floor):
+                    enemy_pos = enemy
 
-                    if enemy_pos in self.enemy_positions:
-                        enemy_pos = enemy
-                        #print(f'cannot stand on another. New pos: {enemy_pos}')
-                    enemy = enemy_pos
-                    self.level[enemy[0]][enemy[1]].has_enemy = True
+                # since the player wont move outside the bounds of the level, the enemies probably wont. I might need to work that in later
+                enemy = enemy_pos
+                self.level[enemy[0]][enemy[1]].has_enemy = True
 
-                    self.enemy_positions[i] = enemy
+                self.enemy_positions[i] = enemy
             self.turn = 2
 
         self.player_points += points
+        if self.player_points <= 0:
+            self.events.append(EVENT_CODES['Player Death'])
+            self.done = True
         return points
 
 

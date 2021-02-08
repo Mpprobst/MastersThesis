@@ -21,3 +21,5 @@ while (not env.done and move_count < 50 and points > 0):
     print(f'player move {move}')
     points += env.move(move)
     print("")
+
+print(f'GAME OVER. Player {"Win" if points > 0 else "Lose"}\nGame Events: {env.events}')
