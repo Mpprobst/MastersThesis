@@ -15,7 +15,7 @@ MOVE_FACTORS = { 'U' : (-1, 0),
                  'L' : (0, -1),
                  'R' : (0, 1) }
 
-EVENT_CODES = { 'Player Damaged' : 'E',
+EVENT_CODES = { 'Enemies Attack' : 'E',
                 'Wall Destroyed' : 'W',
                 'Food Collected' : 'F',
                 'Player Death' : 'L',
@@ -33,8 +33,8 @@ class ScavengerEnv():
         self.level_height = 8   # number of rows in the level space (y direction)
         self.level = []     # matrix containing level information. SHOULD BE INDEXED (y, x)
         self.player_points = 20
-        self.player_position = (0, self.level_height-1)
-        self.goal_position = (self.level_width-1, self.level_height-1)
+        self.player_position = (self.level_height-1, 0)
+        self.goal_position = (0, self.level_width-1)
         self.food_positions = []
         self.enemy_positions = []
         self.turn = 1       # subtracted by 1 each time the player moves. All enemies move when turn == 0
@@ -61,6 +61,7 @@ class ScavengerEnv():
                     self.enemy_positions.append((len(self.level), len(level_row)))
                 elif char == 'G':
                     tile = goal.Goal('G')
+                    self.goal_position = (len(self.level), len(level_row))
                 elif char == 'S':
                     tile = floor.Floor('-')
                     self.player_position = (len(self.level), len(level_row))
@@ -105,21 +106,23 @@ class ScavengerEnv():
         # check if the next tile is a wall and if it has been destroyed after interacting with it
         is_wall = isinstance(next_tile, wall.Wall)
         if is_wall:
-            is_wall = next_tile.health > 0
+            is_wall = next_tile.health >= 0
 
         # if move successful, change player position
         if next_tile.interact():
             if is_wall:
-                if next_tile.health <= 0:
-                    self.events.append(EVENT_CODES['Wall Destroyed'])
+                if next_tile.health < 0:
+                    self.broadcast_event('Wall Destroyed')
 
             if next_tile.has_food:
-                self.events.append(EVENT_CODES['Food Collected'])
+                next_tile.pickup_food()
+                self.broadcast_event('Food Collected')
                 points += 20
             self.player_position = next_pos
 
+        print(f'{self.player_position} == {self.goal_position}')
         if self.player_position == self.goal_position:
-            self.events.append(EVENT_CODES['Player Win'])
+            self.broadcast_event('Player Win')
             self.done = True
             return points
         self.turn -= 1
@@ -139,11 +142,10 @@ class ScavengerEnv():
                     enemy_move = (0, 1) if enemy[1] < self.player_position[1] else (0, -1)
                 enemy_pos = ((enemy[0] + enemy_move[0]),(enemy[1] + enemy_move[1]))
                 #print(f'enemy move: {enemy_move} new pos: {enemy_pos}')
-                
+
                 # if enemy would move into the player, instead they attack
                 if enemy_pos == self.player_position:
-                    print('enemy attack!')
-                    self.events.append(EVENT_CODES['Player Damaged'])
+                    self.broadcast_event('Enemies Attack')
                     points -= 20
                     enemy_pos = enemy
 
@@ -166,10 +168,13 @@ class ScavengerEnv():
 
         self.player_points += points
         if self.player_points <= 0:
-            self.events.append(EVENT_CODES['Player Death'])
+            self.broadcast_event('Player Death')
             self.done = True
         return points
 
+    def broadcast_event(self, event):
+        print(f'{event}')
+        self.events.append(EVENT_CODES[event])
 
     def get_adjacent_tiles(self):
         tiles = []

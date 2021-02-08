@@ -17,10 +17,7 @@ class Floor(tile.Tile):
     def interact(self):
         if self.has_enemy:
             return False
-
-        if self.has_food:
-            self.icon = '-'
-            self.has_food = False
+            
         return True
 
     def get_icon(self):
@@ -32,3 +29,8 @@ class Floor(tile.Tile):
             self.icon = '-'
 
         return self.icon
+
+    def pickup_food(self):
+        if self.has_food:
+            self.icon = '-'
+            self.has_food = False
