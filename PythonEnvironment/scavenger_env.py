@@ -38,57 +38,79 @@ class ScavengerEnv():
         self.food_positions = []
         self.enemy_positions = []
         self.turn = 1       # subtracted by 1 each time the player moves. All enemies move when turn == 0
+        self.last_move = ''
         self.done = False
         self.events = []
-
         f = open(file, "r")
+        level_string = ""
         for line in f:
-            level_row = []
-            for char in line:
-                tile = None
-                if char == '\n':
-                    continue
+            level_string += line
+        self.level = self.generate_level(level_string)
 
-                if char == '-':
-                    tile = floor.Floor('-')
-                elif char == 'W':
-                    tile = wall.Wall(char)
-                elif char == 'F':
-                    tile = floor.Floor('F')
-                    self.food_positions.append((len(self.level), len(level_row)))
-                elif char == 'E':
-                    tile = floor.Floor('E')
-                    self.enemy_positions.append((len(self.level), len(level_row)))
-                elif char == 'G':
-                    tile = goal.Goal('G')
-                    self.goal_position = (len(self.level), len(level_row))
-                elif char == 'S':
-                    tile = floor.Floor('-')
-                    self.player_position = (len(self.level), len(level_row))
+    # given a string of characters, generate a level
+    def generate_level(self, fileinfo):
+        char = ""
+        level = []
+        level_row = []
+        for i in range(len(fileinfo)):
+            char = fileinfo[i]
+            if char == '\n':
+                level.append(level_row)
+                level_row = []
+                continue
 
-                if tile == None:
-                    print(f'Tile type {char} undetermined')
-                if tile != None:
-                    level_row.append(tile)
-            self.level.append(level_row)
+            tile = None
+            if char == '-':
+                tile = floor.Floor('-')
+            elif char == 'W':
+                tile = wall.Wall(char)
+            elif char == 'F':
+                tile = floor.Floor('F')
+                self.food_positions.append((len(level), len(level_row)))
+            elif char == 'E':
+                tile = floor.Floor('E')
+                self.enemy_positions.append((len(level), len(level_row)))
+            elif char == 'G':
+                tile = goal.Goal('G')
+                self.goal_position = (len(level), len(level_row))
+            elif char == 'S':
+                tile = floor.Floor('-')
+                self.player_position = (len(level), len(level_row))
 
-        #self.print_env()
+            if tile == None:
+                print(f'Tile type {char} undetermined')
+            if tile != None:
+                level_row.append(tile)
 
+        return level
+
+    # prints the environment
     def print_env(self):
         print(f'player pos: ({self.player_position[1]}, {self.player_position[0]})')
+        print(self.level_string())
+
+    # returns a string that describes the level
+    def level_string(self):
+        level_string = ""
         for i in range(len(self.level)):
             row = self.level[i]
-            row_string = ""
             for j in range(len(row)):
                 if (i,j) == self.player_position:
-                    row_string += 'A'
+                    level_string += 'A'
                 else:
-                    row_string += row[j].get_icon()
-            print(row_string)
+                    level_string += row[j].get_icon()
+            level_string += '\n'
+        return level_string
+
+    # returns true if the given tile is the goal state
+    def is_goal(self, tile):
+        return isinstance(tile, goal.Goal)
+
     # Given a move from the agent, adjust the environment
     # Potential moves are : U, D, L, R for Up, Down, Left, and Right movement
     # Returns the score earned after the move
     def move(self, move):
+        self.last_move = move
         # get tile next to player
         move_factor = MOVE_FACTORS[move]
         # ensure player stays in bounds of game
@@ -177,17 +199,33 @@ class ScavengerEnv():
         print(f'{event}')
         self.events.append(EVENT_CODES[event])
 
-    def get_adjacent_tiles(self):
-        tiles = []
-        for factor in MOVE_FACTORS:
-            x = MOVE_FACTORS[factor][0] + self.player_position[0]
-            y = MOVE_FACTORS[factor][1] + self.player_position[1]
+    def get_player_state(self):
+        return (self.player_position, self.last_move, self.player_points)
+
+    def get_tile(self, pos):
+        return self.level[pos[0]][pos[1]]
+
+    def get_successors(self):
+        pos = self.player_position
+        for move in MOVE_FACTORS:
+            x = MOVE_FACTORS[move][0] + pos[0]
+            y = MOVE_FACTORS[move][1] + pos[1]
             if x >= self.level_width or x < 0:
-                x = self.player_position[0]
+                x = self.pos[0]
             if y >= self.level_height or y < 0:
-                y = self.player_position[1]
+                y = self.pos[1]
             next_pos = (x,y)
-            print(f'({y}, {x}) if move {factor}')
-            tiles.append(self.level[next_pos[0]][next_pos[1]])
+
+            #print(f'({y}, {x}) if move {move}')
+            tile = self.level[next_pos[0]][next_pos[1]]
+            reward = -1
+            if self.is_goal(tile):
+                reward += 1
+            if tile.has_food:
+                reward += 20
+            if tile.has_enemy and self.turn == 1:
+                reward -= 20
+            next_tile = (tile, move, reward)
+            tiles.append(next_tile)
 
         return tiles
