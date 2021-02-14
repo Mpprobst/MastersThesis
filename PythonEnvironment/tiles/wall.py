@@ -15,7 +15,6 @@ class Wall(tile.Tile):
     def interact(self):
         self.health -= 1
         self.icon = f'{self.health}'
-        print(f'wall hp: {self.health} icon = {self.icon}')
         if self.health <= 0:
             self.icon = '-'
             return True

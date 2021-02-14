@@ -42,14 +42,6 @@ class ScavengerEnv():
         self.level = self.generate_level(level_info)     # matrix containing level information. SHOULD BE INDEXED (y, x)
         self.events = []
 
-    def clone(self):
-        copy = ScavengerEnv(self.level_string(), False)
-        copy.level = self.level.copy()
-        copy.player_points = self.player_points
-        copy.player_position = self.player_position
-        copy.enemy_positions = self.enemy_positions.copy()
-        return copy
-
     # given a string of characters, generate a level
     def generate_level(self, level_string):
         char = ""
@@ -201,9 +193,6 @@ class ScavengerEnv():
         if self.verbose:
             print(f'{event}')
         self.events.append(EVENT_CODES[event])
-
-    def get_player_state(self):
-        return (self.player_position, self.last_move, self.player_points)
 
     def get_tile(self, pos):
         return self.level[pos[0]][pos[1]]
