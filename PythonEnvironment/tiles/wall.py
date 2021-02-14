@@ -10,11 +10,13 @@ from tiles import tile
 class Wall(tile.Tile):
     def __init__(self, icon):
         super().__init__(icon)
-        self.health = 3
+        self.health = int(icon)
 
     def interact(self):
         self.health -= 1
-        if self.health < 0:
+        self.icon = f'{self.health}'
+        print(f'wall hp: {self.health} icon = {self.icon}')
+        if self.health <= 0:
             self.icon = '-'
             return True
 

@@ -16,10 +16,10 @@ MOVE_FACTORS = { 'U' : (-1, 0),
                  'R' : (0, 1) }
 
 EVENT_CODES = { 'Enemies Attack' : 'E',
-                'Wall Destroyed' : 'W',
+                'Wall Destroyed' : 'X',
                 'Food Collected' : 'F',
                 'Player Death' : 'L',
-                'Player Win' : 'V' }
+                'Player Win' : 'W' }
 
 class Player():
     def __init__(self, start_pos):
@@ -27,33 +27,36 @@ class Player():
         self.points = 20
 
 class ScavengerEnv():
-    # Given a file to base the level off of
-    def __init__(self, file):
+    # Given a string to base the level off of
+    def __init__(self, level_info, verbose):
+        self.verbose = verbose  # if true, print out the game
         self.level_width = 8    # number of columns in the level space (x dirextion)
         self.level_height = 8   # number of rows in the level space (y direction)
-        self.level = []     # matrix containing level information. SHOULD BE INDEXED (y, x)
         self.player_points = 20
         self.player_position = (self.level_height-1, 0)
         self.goal_position = (0, self.level_width-1)
         self.food_positions = []
         self.enemy_positions = []
         self.turn = 1       # subtracted by 1 each time the player moves. All enemies move when turn == 0
-        self.last_move = ''
         self.done = False
+        self.level = self.generate_level(level_info)     # matrix containing level information. SHOULD BE INDEXED (y, x)
         self.events = []
-        f = open(file, "r")
-        level_string = ""
-        for line in f:
-            level_string += line
-        self.level = self.generate_level(level_string)
+
+    def clone(self):
+        copy = ScavengerEnv(self.level_string(), False)
+        copy.level = self.level.copy()
+        copy.player_points = self.player_points
+        copy.player_position = self.player_position
+        copy.enemy_positions = self.enemy_positions.copy()
+        return copy
 
     # given a string of characters, generate a level
-    def generate_level(self, fileinfo):
+    def generate_level(self, level_string):
         char = ""
         level = []
         level_row = []
-        for i in range(len(fileinfo)):
-            char = fileinfo[i]
+        for i in range(len(level_string)):
+            char = level_string[i]
             if char == '\n':
                 level.append(level_row)
                 level_row = []
@@ -62,7 +65,7 @@ class ScavengerEnv():
             tile = None
             if char == '-':
                 tile = floor.Floor('-')
-            elif char == 'W':
+            elif char == '3' or char == '2' or char == '1':
                 tile = wall.Wall(char)
             elif char == 'F':
                 tile = floor.Floor('F')
@@ -73,7 +76,7 @@ class ScavengerEnv():
             elif char == 'G':
                 tile = goal.Goal('G')
                 self.goal_position = (len(level), len(level_row))
-            elif char == 'S':
+            elif char == 'S' or char == 'A':
                 tile = floor.Floor('-')
                 self.player_position = (len(level), len(level_row))
 
@@ -110,7 +113,6 @@ class ScavengerEnv():
     # Potential moves are : U, D, L, R for Up, Down, Left, and Right movement
     # Returns the score earned after the move
     def move(self, move):
-        self.last_move = move
         # get tile next to player
         move_factor = MOVE_FACTORS[move]
         # ensure player stays in bounds of game
@@ -133,7 +135,7 @@ class ScavengerEnv():
         # if move successful, change player position
         if next_tile.interact():
             if is_wall:
-                if next_tile.health < 0:
+                if next_tile.health <= 0:
                     self.broadcast_event('Wall Destroyed')
 
             if next_tile.has_food:
@@ -142,7 +144,6 @@ class ScavengerEnv():
                 points += 20
             self.player_position = next_pos
 
-        print(f'{self.player_position} == {self.goal_position}')
         if self.player_position == self.goal_position:
             self.broadcast_event('Player Win')
             self.done = True
@@ -151,7 +152,8 @@ class ScavengerEnv():
 
         # enemy turn
         if self.turn == 0:
-            print("enemies move...")
+            if self.verbose:
+                print("enemies move...")
             #print(f'enemy positions: {self.enemy_positions}')
             for i in range(len(self.enemy_positions)):
                 enemy = self.enemy_positions[i]
@@ -196,7 +198,8 @@ class ScavengerEnv():
         return points
 
     def broadcast_event(self, event):
-        print(f'{event}')
+        if self.verbose:
+            print(f'{event}')
         self.events.append(EVENT_CODES[event])
 
     def get_player_state(self):
@@ -207,13 +210,14 @@ class ScavengerEnv():
 
     def get_successors(self):
         pos = self.player_position
+        tiles = []
         for move in MOVE_FACTORS:
             x = MOVE_FACTORS[move][0] + pos[0]
             y = MOVE_FACTORS[move][1] + pos[1]
             if x >= self.level_width or x < 0:
-                x = self.pos[0]
+                x = pos[0]
             if y >= self.level_height or y < 0:
-                y = self.pos[1]
+                y = pos[1]
             next_pos = (x,y)
 
             #print(f'({y}, {x}) if move {move}')
