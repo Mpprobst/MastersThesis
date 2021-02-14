@@ -4,7 +4,7 @@ Purpose: Testing functioality of the scavenger environment
 Author: Michael Probst
 """
 
-import time
+import timeit
 import scavenger_env as env
 from random_agent import RandomAgent
 from simple_agent import SimpleAgent
@@ -22,10 +22,10 @@ move_count = 0
 points = 20
 
 #agent = RandomAgent(points)
-#agent = SimpleAgent(points)
-agent = AstarAgent(points, env)
+agent = SimpleAgent(points)
+#agent = AstarAgent(points, env)
 
-start_time = time.time()
+start_time = timeit.default_timer()
 move_time = start_time
 while (not env.done and move_count < 50 and points > 0):
     print(f'points: {points}')
@@ -33,8 +33,8 @@ while (not env.done and move_count < 50 and points > 0):
     move = agent.suggest_move(env)
     print(f'player move {move}')
     points += env.move(move)
-    print(f'time to calculate move: {time.time() - move_time}')
-    move_time = time.time()
+    print(f'time to calculate move: {timeit.default_timer() - move_time}')
+    move_time = timeit.default_timer()
     print("")
 
 print(f'GAME OVER. Player {"Win" if points > 0 else "Lose"}\nGame Events: {env.events} total gameplay time = {(time.time() - start_time)}')
