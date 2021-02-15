@@ -42,6 +42,30 @@ class ScavengerEnv():
         self.level = self.generate_level(level_info)     # matrix containing level information. SHOULD BE INDEXED (y, x)
         self.events = []
 
+    # given a tile icon, generate a tile
+    def create_tile(self, icon, pos):
+        tile = None
+        if icon == '-':
+            tile = floor.Floor('-')
+        elif icon == '3' or icon == '2' or icon == '1':
+            tile = wall.Wall(icon)
+        elif icon == 'F':
+            tile = floor.Floor('F')
+            self.food_positions.append(pos)
+        elif icon == 'E':
+            tile = floor.Floor('E')
+            self.enemy_positions.append(pos)
+        elif icon == 'G':
+            tile = goal.Goal('G')
+            self.goal_position = (pos)
+        elif icon == 'S' or icon == 'A':
+            tile = floor.Floor('-')
+            self.player_position = (pos)
+
+        if tile == None:
+            print(f'Tile type {icon} undetermined')
+        return tile
+
     # given a string of characters, generate a level
     def generate_level(self, level_string):
         char = ""
@@ -54,30 +78,29 @@ class ScavengerEnv():
                 level_row = []
                 continue
 
-            tile = None
-            if char == '-':
-                tile = floor.Floor('-')
-            elif char == '3' or char == '2' or char == '1':
-                tile = wall.Wall(char)
-            elif char == 'F':
-                tile = floor.Floor('F')
-                self.food_positions.append((len(level), len(level_row)))
-            elif char == 'E':
-                tile = floor.Floor('E')
+            tile = self.create_tile(char, (len(level), len(level_row)))
+            """
+            if tile.has_enemy:
                 self.enemy_positions.append((len(level), len(level_row)))
-            elif char == 'G':
-                tile = goal.Goal('G')
-                self.goal_position = (len(level), len(level_row))
-            elif char == 'S' or char == 'A':
-                tile = floor.Floor('-')
+            if tile.has_food:
+                self.food_positions.append((len(level), len(level_row)))
+            if char == 'A' or char == 'S':
                 self.player_position = (len(level), len(level_row))
-
-            if tile == None:
-                print(f'Tile type {char} undetermined')
-            if tile != None:
-                level_row.append(tile)
+            """
+            level_row.append(tile)
 
         return level
+
+    # compare a new level string to the current level. Update tiles that have changed.
+    # used by the astar agent
+    def update_level(self, levelstring):
+        row = 0
+        curr_levelstring = self.level_string()
+        for i in range(len(curr_levelstring)):
+            if levelstring[i] == '\n':
+                row += 1
+            if levelstring[i] != curr_levelstring[i]:
+                self.level[row][i % 9] = self.create_tile(levelstring[i], (row, i % 9)) # if i == 9 we should be at 1,0
 
     # prints the environment
     def print_env(self):
@@ -211,13 +234,16 @@ class ScavengerEnv():
 
             #print(f'({y}, {x}) if move {move}')
             tile = self.level[next_pos[0]][next_pos[1]]
-            reward = -1
+            # the higher the reward, the less optimal it is (eases use of prioroty queue)
+            reward = 1
             if self.is_goal(tile):
-                reward += 1
+                reward = -5
             if tile.has_food:
-                reward += 20
+                reward = -20
             if tile.has_enemy and self.turn == 1:
-                reward -= 20
+                reward = 20
+            if isinstance(tile, wall.Wall):
+                reward += tile.health
             next_tile = (tile, move, reward)
             tiles.append(next_tile)
 

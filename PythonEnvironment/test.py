@@ -22,8 +22,8 @@ move_count = 0
 points = 20
 
 #agent = RandomAgent(points)
-agent = SimpleAgent(points)
-#agent = AstarAgent(points, env)
+#agent = SimpleAgent(points)
+agent = AstarAgent(points, env)
 
 start_time = timeit.default_timer()
 move_time = start_time
@@ -37,4 +37,4 @@ while (not env.done and move_count < 50 and points > 0):
     move_time = timeit.default_timer()
     print("")
 
-print(f'GAME OVER. Player {"Win" if points > 0 else "Lose"}\nGame Events: {env.events} total gameplay time = {(time.time() - start_time)}')
+print(f'GAME OVER. Player {"Win" if points > 0 else "Lose"}\nGame Events: {env.events} total gameplay time = {(timeit.default_timer() - start_time)}')
