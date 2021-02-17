@@ -17,7 +17,9 @@ class AstarAgent():
 
     def suggest_move(self, env):
         seq = self.a_star_search(env, self.optimal_heuristic)
-        move = seq[0]
+        move = 'U'
+        if len(seq) > 0:
+            move = seq[0]
         #move = self.sequence[self.move_count]
         self.move_count += 1
         return move
@@ -38,7 +40,12 @@ class AstarAgent():
     # optimal gameplay gets as much food as possible in the fewest moves possible
     # while avoiding enemies
     def optimal_heuristic(self, env, offset=0):
-        return offset
+        # maximize distance from enemies.
+        max_dist = util.manhattanDistance( (env.level_height-1, 0), env.goal_position )
+        total_dist = 0
+        for enemy in env.enemy_positions:
+            total_dist += max_dist - (util.manhattanDistance(env.player_position, enemy))
+        return offset #+ total_dist
 
     def a_star_search(self, env, heuristic):
         # a state = ( (levelstring, points, turn), [sequence] ) the level string can be used to create a new env and simulate

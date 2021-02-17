@@ -242,9 +242,10 @@ class ScavengerEnv():
                 reward -= 100
             if isinstance(tile, wall.Wall):
                 reward += tile.health
-            """
+
             if tile.has_enemy:
                 reward += 50
+            """
             # if the tile is adjacent to an enemy
             if recurse:
                 adjacent_tiles = self.get_successors(next_pos, False)
