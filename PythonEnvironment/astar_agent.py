@@ -52,25 +52,31 @@ class AstarAgent():
         sim_env = ScavengerEnv(env.level_string(), False)
         while not open_list.isEmpty():
             current_state = open_list.pop()
+            sim_env.player_points = current_state[0][1]
+            sim_env.turn = current_state[0][2]
+            sim_env.update_level(current_state[0][0])
+
             visited = False
+            if sim_env.done:
+                break
 
             for i in closed_list:
                 if i[0][0] == current_state[0][0] and i[0][1] == current_state[0][1]:
-                #if i == current_state:
                     visited = True
                     break
 
             if not visited and not sim_env.done and current_state is not None:
-                successors = env.get_successors()
+                successors = env.get_successors(sim_env.player_position)
                 for s in successors:
                     # simulate next move in a new environment
                     starttime = timeit.default_timer()
+                    sim_env.player_points = current_state[0][1]
+                    sim_env.turn = current_state[0][2]
                     sim_env.update_level(current_state[0][0])
                     #sim_env.level = sim_env.generate_level(current_state[0][0])
                     #print(f'level update time: {timeit.default_timer() - starttime}')
                     times.append(timeit.default_timer() - starttime)
-                    sim_env.player_points = current_state[0][1]
-                    sim_env.turn = current_state[0][2]
+
                     sim_env.move(s[1])
 
                     # at a certain point, the agent will ineviteably fail
@@ -83,7 +89,7 @@ class AstarAgent():
 
                     starve_distance = min(food_distances)
                     #print(f'starve dist = {starve_distance}')
-                    if sim_env.player_points <= starve_distance:
+                    if sim_env.player_points < starve_distance:
                         num_endings += 1
                         continue
 
@@ -92,12 +98,14 @@ class AstarAgent():
                     for action in current_state[1]:
                         path.append(action)
                     path.append(s[1])
-
+                    if len(path) >= 18:
+                        continue
                     # update openlist with the new environment
-                    print(current_state)
-                    new_state = ( (sim_env.level_string(), sim_env.player_points, sim_env.turn), path, current_state[2] + heuristic(sim_env, s[2]) )
-                    #print(f'In ({sim_env.player_position[1]}, {sim_env.player_position[0]}) move {s[1]} for potential score: {sim_env.player_points}')
-                    open_list.push( new_state, heuristic(sim_env, s[2]))
+                    priority = current_state[2] + heuristic(sim_env, s[2])
+                    new_state = ( (sim_env.level_string(), sim_env.player_points, sim_env.turn), path,  priority)
+                    #print(f'pushing to open list: {new_state[1]}, {new_state[2]}')
+                    #print(f'In ({sim_env.player_position[1]}, {sim_env.player_position[0]}) move {s[1]} for potential score: {sim_env.player_points}, heuristic: ')
+                    open_list.push(new_state, priority)
                 # end for s in successors
             # end not visited...
             closed_list.append(current_state)

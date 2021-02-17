@@ -3,7 +3,6 @@ scavenger_env.py
 Purpose: provides an environment replicating the Scavenger game for agents to play
 Author: Michael Probst
 """
-
 import numpy as np
 from tiles import floor
 from tiles import wall
@@ -21,18 +20,13 @@ EVENT_CODES = { 'Enemies Attack' : 'E',
                 'Player Death' : 'L',
                 'Player Win' : 'W' }
 
-class Player():
-    def __init__(self, start_pos):
-        self.position = start_pos
-        self.points = 20
-
 class ScavengerEnv():
     # Given a string to base the level off of
     def __init__(self, level_info, verbose):
         self.verbose = verbose  # if true, print out the game
         self.level_width = 8    # number of columns in the level space (x dirextion)
         self.level_height = 8   # number of rows in the level space (y direction)
-        self.player_points = 20
+        self.player_points = 30
         self.player_position = (self.level_height-1, 0)
         self.goal_position = (0, self.level_width-1)
         self.food_positions = []
@@ -101,10 +95,16 @@ class ScavengerEnv():
                 row += 1
             if levelstring[i] != curr_levelstring[i]:
                 self.level[row][i % 9] = self.create_tile(levelstring[i], (row, i % 9)) # if i == 9 we should be at 1,0
+        # how do we evaluate if we are done?
+        # well we are done if we are in the goal state and not dead.
+        if self.player_position == self.goal_position or self.player_points <= 0:
+            self.done = True
+        elif self.player_points > 0:
+            self.done = False
 
     # prints the environment
     def print_env(self):
-        print(f'player pos: ({self.player_position[1]}, {self.player_position[0]})')
+        print(f'points: {self.player_points} player pos: ({self.player_position[1]}, {self.player_position[0]})')
         print(self.level_string())
 
     # returns a string that describes the level
@@ -220,8 +220,8 @@ class ScavengerEnv():
     def get_tile(self, pos):
         return self.level[pos[0]][pos[1]]
 
-    def get_successors(self):
-        pos = self.player_position
+    def get_successors(self, pos, recurse=True):
+        #pos = self.player_position
         tiles = []
         for move in MOVE_FACTORS:
             x = MOVE_FACTORS[move][0] + pos[0]
@@ -235,15 +235,28 @@ class ScavengerEnv():
             #print(f'({y}, {x}) if move {move}')
             tile = self.level[next_pos[0]][next_pos[1]]
             # the higher the reward, the less optimal it is (eases use of prioroty queue)
-            reward = 1
+            reward = 50
             if self.is_goal(tile):
-                reward = -5
+                reward -= 25
             if tile.has_food:
-                reward = -20
-            if tile.has_enemy and self.turn == 1:
-                reward = 20
+                reward -= 100
             if isinstance(tile, wall.Wall):
                 reward += tile.health
+            """
+            if tile.has_enemy:
+                reward += 50
+            # if the tile is adjacent to an enemy
+            if recurse:
+                adjacent_tiles = self.get_successors(next_pos, False)
+                threat = False
+                for adj in adjacent_tiles:
+                    if adj[0].has_enemy:
+                        threat = True
+                        if threat:
+                            reward += 10
+                            if self.turn == 1:
+                                reward += 10
+            """
             next_tile = (tile, move, reward)
             tiles.append(next_tile)
 
