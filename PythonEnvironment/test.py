@@ -31,8 +31,8 @@ while (not env.done and move_count < 50):
     move = agent.suggest_move(env)
     print(f'player move {move}')
     env.move(move)
-    print(f'time to calculate move: {timeit.default_timer() - move_time}')
+    #print(f'time to calculate move: {timeit.default_timer() - move_time}')
     move_time = timeit.default_timer()
     print("")
 
-print(f'GAME OVER. Player {"Win" if env.player_points > 0 else "Lose"}\nGame Events: {env.events} total gameplay time = {(timeit.default_timer() - start_time)}')
+print(f'GAME OVER. Player {"Win" if env.player_points > 0 else "Lose"} with {env.player_points} points.\nGame Events: {env.events} total gameplay time = {(timeit.default_timer() - start_time)}')

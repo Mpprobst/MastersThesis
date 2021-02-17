@@ -90,10 +90,13 @@ class ScavengerEnv():
     def update_level(self, levelstring):
         row = 0
         curr_levelstring = self.level_string()
+        self.enemy_positions = []
+        self.food_positions = []
         for i in range(len(curr_levelstring)):
             if levelstring[i] == '\n':
                 row += 1
-            if levelstring[i] != curr_levelstring[i]:
+            else:
+            #if levelstring[i] != curr_levelstring[i]:
                 self.level[row][i % 9] = self.create_tile(levelstring[i], (row, i % 9)) # if i == 9 we should be at 1,0
         # how do we evaluate if we are done?
         # well we are done if we are in the goal state and not dead.
@@ -234,18 +237,18 @@ class ScavengerEnv():
 
             #print(f'({y}, {x}) if move {move}')
             tile = self.level[next_pos[0]][next_pos[1]]
-            # the higher the reward, the less optimal it is (eases use of prioroty queue)
-            reward = 50
+            # the higher the cost, the less optimal it is (eases use of prioroty queue)
+            cost = 30
             if self.is_goal(tile):
-                reward -= 25
+                cost = -70
             if tile.has_food:
-                reward -= 100
+                cost = -100
             if isinstance(tile, wall.Wall):
-                reward += tile.health
+                cost = 29 + tile.health
 
             if tile.has_enemy:
-                reward += 50
-            """
+                cost = 40
+
             # if the tile is adjacent to an enemy
             if recurse:
                 adjacent_tiles = self.get_successors(next_pos, False)
@@ -254,11 +257,14 @@ class ScavengerEnv():
                     if adj[0].has_enemy:
                         threat = True
                         if threat:
-                            reward += 10
+                            cost = 50
                             if self.turn == 1:
-                                reward += 10
-            """
-            next_tile = (tile, move, reward)
+                                cost = 100
+                                # the agent should really not want to die
+                                if self.player_points <= 20:
+                                    cost = 1000
+
+            next_tile = (tile, move, cost)
             tiles.append(next_tile)
 
         return tiles

@@ -37,15 +37,15 @@ class AstarAgent():
             points = 0.01
         return float(1/points)
 
-    # optimal gameplay gets as much food as possible in the fewest moves possible
+    # optimal gameplay gets as much food as possible in the fewest moves possiblep
     # while avoiding enemies
     def optimal_heuristic(self, env, offset=0):
         # maximize distance from enemies.
         max_dist = util.manhattanDistance( (env.level_height-1, 0), env.goal_position )
         total_dist = 0
         for enemy in env.enemy_positions:
-            total_dist += max_dist - (util.manhattanDistance(env.player_position, enemy))
-        return offset #+ total_dist
+            total_dist += (util.manhattanDistance(env.player_position, enemy))
+        return offset + total_dist
 
     def a_star_search(self, env, heuristic):
         # a state = ( (levelstring, points, turn), [sequence] ) the level string can be used to create a new env and simulate
@@ -64,13 +64,27 @@ class AstarAgent():
             sim_env.update_level(current_state[0][0])
 
             visited = False
-            if sim_env.done:
+            if sim_env.done and sim_env.player_points > 0:
                 break
 
             for i in closed_list:
                 if i[0][0] == current_state[0][0] and i[0][1] == current_state[0][1]:
                     visited = True
                     break
+
+            # at a certain point, the agent will ineviteably fail
+            # this point can be determined by the starve_distance
+            manhattan_distance = util.manhattanDistance(sim_env.player_position, sim_env.goal_position)
+            food_distances = []
+            for food in sim_env.food_positions:
+                food_distances.append(util.manhattanDistance(sim_env.player_position, food))
+            food_distances.append(manhattan_distance)
+
+            starve_distance = min(food_distances)
+            #print(f'starve dist = {starve_distance}')
+            if sim_env.player_points < starve_distance:
+                num_endings += 1
+                continue
 
             if not visited and not sim_env.done and current_state is not None:
                 successors = env.get_successors(sim_env.player_position)
@@ -86,27 +100,13 @@ class AstarAgent():
 
                     sim_env.move(s[1])
 
-                    # at a certain point, the agent will ineviteably fail
-                    # this point can be determined by the starve_distance
-                    manhattan_distance = util.manhattanDistance(sim_env.player_position, sim_env.goal_position)
-                    food_distances = []
-                    for food in sim_env.food_positions:
-                        food_distances.append(util.manhattanDistance(sim_env.player_position, food))
-                    food_distances.append(manhattan_distance)
-
-                    starve_distance = min(food_distances)
-                    #print(f'starve dist = {starve_distance}')
-                    if sim_env.player_points < starve_distance:
-                        num_endings += 1
-                        continue
-
                     # update the sequence of moves after this move
                     path = list()
                     for action in current_state[1]:
                         path.append(action)
                     path.append(s[1])
-                    if len(path) >= 18:
-                        continue
+                    #if len(path) >= 18:
+                    #    continue
                     # update openlist with the new environment
                     priority = current_state[2] + heuristic(sim_env, s[2])
                     new_state = ( (sim_env.level_string(), sim_env.player_points, sim_env.turn), path,  priority)
@@ -122,5 +122,5 @@ class AstarAgent():
         for s in sequence:
             sequence_string += s
         print(f'sequence: {sequence_string} has heuristic value of: {current_state[2]}')
-        print(f'# calculated moves = {len(closed_list)} num leaves = {num_endings} avg computation time: {sum(times) / len(times)}')
+        #print(f'# calculated moves = {len(closed_list)} num leaves = {num_endings} avg level update time: {sum(times) / len(times)}')
         return sequence
