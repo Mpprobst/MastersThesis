@@ -37,7 +37,7 @@ public class BoardManager : MonoBehaviour
 	private Transform boardHolder;                                  //A variable to store a reference to the transform of our Board object.
 	private List<Vector3> gridPositions = new List<Vector3>();   //A list of possible locations to place tiles.
 
-	// Matrix that describes the game using characters. S = Start, G = Exit, W = Wall, - = floor, E = enemy, F = food
+	// Matrix that describes the game using characters. S = Start, G = Exit, 3 = Wall (indicates wall health), - = floor, E = enemy, F = food
 	private char[][] levelInfo;
 	private Dictionary<char, GameObject[]> objectDictionary;
 
@@ -154,7 +154,7 @@ public class BoardManager : MonoBehaviour
 		objectDictionary.Add('G', exitArray);
 		objectDictionary.Add('F', foodTiles);
 		objectDictionary.Add('E', enemyTiles);
-		objectDictionary.Add('W', wallTiles);
+		objectDictionary.Add('3', wallTiles);
 
 		InitializeLevel();
 
@@ -210,7 +210,7 @@ public class BoardManager : MonoBehaviour
 		InitialiseList();
 
 		//Instantiate a random number of wall tiles based on minimum and maximum, at randomized positions.
-		LayoutObjectAtRandom(wallTiles, wallCount.minimum, wallCount.maximum, 'W');
+		LayoutObjectAtRandom(wallTiles, wallCount.minimum, wallCount.maximum, '3');
 
 		//Instantiate a random number of food tiles based on minimum and maximum, at randomized positions.
 		LayoutObjectAtRandom(foodTiles, foodCount.minimum, foodCount.maximum, 'F');
