@@ -9,7 +9,7 @@ from random_agent import RandomAgent
 from simple_agent import SimpleAgent
 from astar_agent import AstarAgent
 
-filename = "resources/training/level_8.txt"
+filename = "resources/training/level_1.txt"
 
 f = open(filename, "r")
 level_string = ""
