@@ -238,16 +238,16 @@ class ScavengerEnv():
             #print(f'({y}, {x}) if move {move}')
             tile = self.level[next_pos[0]][next_pos[1]]
             # the higher the cost, the less optimal it is (eases use of prioroty queue)
-            cost = 30
+            cost = 1
             if self.is_goal(tile):
-                cost = -70
+                cost = -10
             if tile.has_food:
-                cost = -100
+                cost = -20
             if isinstance(tile, wall.Wall):
-                cost = 29 + tile.health
+                cost = tile.health
 
             if tile.has_enemy:
-                cost = 40
+                cost = 20
 
             # if the tile is adjacent to an enemy
             if recurse:
@@ -257,12 +257,12 @@ class ScavengerEnv():
                     if adj[0].has_enemy:
                         threat = True
                         if threat:
-                            cost = 50
+                            cost = 5
                             if self.turn == 1:
-                                cost = 100
+                                cost = 20
                                 # the agent should really not want to die
                                 if self.player_points <= 20:
-                                    cost = 1000
+                                    cost = 100
 
             next_tile = (tile, move, cost)
             tiles.append(next_tile)
