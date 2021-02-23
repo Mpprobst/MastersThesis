@@ -55,7 +55,7 @@ class AstarAgent():
         current_state = ((env.level_string(), env.player_points, env.turn), [], heuristic(env))
         num_endings = 0
         times = []
-
+        start_time = timeit.default_timer()
         sim_env = ScavengerEnv(env.level_string(), False)
         while not open_list.isEmpty():
             current_state = open_list.pop()
@@ -64,7 +64,7 @@ class AstarAgent():
             sim_env.update_level(current_state[0][0])
 
             visited = False
-            if sim_env.done:
+            if sim_env.done or timeit.default_timer() - start_time > 30:
                 break
 
             for i in closed_list:
