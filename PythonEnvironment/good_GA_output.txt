@@ -1,0 +1,43 @@
+(base) MacBook-Probst:PythonEnvironment michaelprobst$ python level_generator.py
+Event Options:
+E -> Enemies Attack
+X -> Wall Destroyed
+F -> Food Collected
+L -> Player Death
+W -> Player Win
+Complete your sequence with an end condition: W or L
+Please enter event #1: F
+Please enter event #2: W
+desired events: ['F', 'W']
+compare ['F', 'W'] to ['X', 'F', 'W']. 85.00% fit
+compare ['F', 'W'] to ['F', 'W']. 100.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 70.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to []. 0.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to ['F']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'W']. 85.00% fit
+compare ['F', 'W'] to ['E', 'E', 'L']. 0.00% fit
+compare ['F', 'W'] to ['E', 'L']. 0.00% fit
+compare ['F', 'W'] to ['F', 'E', 'W']. 85.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to ['F']. 50.00% fit
+TRAIN AVG FITNESS = 47.73%
+
+TESTING GENERATED LEVELS
+compare ['F', 'W'] to ['F', 'W']. 100.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to ['X', 'F']. 50.00% fit
+compare ['F', 'W'] to ['E', 'F', 'F', 'W']. 70.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 70.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to ['F']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'W']. 85.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to ['F']. 50.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to ['F']. 50.00% fit
+Aborting due to time constraint
+compare ['F', 'W'] to ['F']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'E', 'W']. 55.00% fit
+TRAIN AVG FITNESS = 63.00%

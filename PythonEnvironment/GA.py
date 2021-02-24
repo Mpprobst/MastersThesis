@@ -12,7 +12,7 @@ from scavenger_env import ScavengerEnv
 from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
-TILES = ['3', '-', 'E', 'F']
+TILES = ['3', '-', '-', '-', 'E', 'F']
 TIME_CUTOFF = 30
 
 class GA():
