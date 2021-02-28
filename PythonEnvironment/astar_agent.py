@@ -64,7 +64,7 @@ class AstarAgent():
             sim_env.update_level(current_state[0][0])
 
             visited = False
-            if sim_env.done or timeit.default_timer() - start_time > 30:
+            if sim_env.done or timeit.default_timer() - start_time > 5:
                 break
 
             for i in closed_list:
@@ -76,13 +76,9 @@ class AstarAgent():
                 successors = env.get_successors(sim_env.player_position)
                 for s in successors:
                     # simulate next move in a new environment
-                    starttime = timeit.default_timer()
                     sim_env.player_points = current_state[0][1]
                     sim_env.turn = current_state[0][2]
                     sim_env.update_level(current_state[0][0])
-                    #sim_env.level = sim_env.generate_level(current_state[0][0])
-                    #print(f'level update time: {timeit.default_timer() - starttime}')
-                    times.append(timeit.default_timer() - starttime)
 
                     sim_env.move(s[1])
 
