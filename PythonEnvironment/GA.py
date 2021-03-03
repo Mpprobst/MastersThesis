@@ -163,8 +163,8 @@ class GA():
         for i in range(len(next_generation)):
             next_generation[i] = self.mutate(next_generation[i])
         self.current_generation = next_generation
-        # TODO: sort the final generated into the top 3 fitness to send to Unity
 
+    # sort the final generation into the top 3 fitness to send to Unity
     def test_generated_levels(self):
         print("TESTING GENERATED LEVELS")
         avg_fit = 0
