@@ -28,6 +28,7 @@ class GA():
             print(f'\nGENERATION {i}')
             self.train()
             print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
+        self.test_generated_levels()
 
 
     def get_generation_files(self, path):
