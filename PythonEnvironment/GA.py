@@ -130,7 +130,7 @@ class GA():
             if level[i] == '\n' or level[i] == 'S' or level[i] == 'G':
                 mutated += level[i]
             else:
-                if random.random() < 0.10:
+                if random.random() < 0.02:
                     mutated += random.choice(TILES)
                 else:
                     mutated += level[i]
