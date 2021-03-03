@@ -5,6 +5,7 @@ Author: Michael Probst
 """
 
 import argparse
+import timeit
 from GA import GA
 
 EVENT_CODES = { 'E' : 'Enemies Attack',
@@ -14,7 +15,7 @@ EVENT_CODES = { 'E' : 'Enemies Attack',
                 'W' : 'Player Win'}
 
 parser = argparse.ArgumentParser(description='Define the problem to solve.')
-parser.add_argument('--gens', type=int, default = 500, help='Number of generations the genetic algorithm generates.')
+parser.add_argument('--gens', type=int, default = 1, help='Number of generations the genetic algorithm generates.')
 parser.add_argument('--verbose', help='Visualize the environment.', action='store_true')
 args = parser.parse_args()
 
@@ -24,6 +25,7 @@ print(f'Event Options: ')
 for key in EVENT_CODES.keys():
     print(f'{key} -> {EVENT_CODES[key]}')
 
+time = timeit.default_timer()
 print(f'Complete your sequence with an end condition: W or L')
 while not done:
     event = input(f'Please enter event #{len(events) + 1}: ')[0]
@@ -38,4 +40,5 @@ while not done:
         done = True
 
 print(f'desired events: {events}')
-genetic_algorithm = GA(events)
+genetic_algorithm = GA(events, args.gens, args.verbose)
+print(f'Total Runtime: {(timeit.default_timer() - time):.2f}')

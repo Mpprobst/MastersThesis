@@ -64,7 +64,7 @@ class AstarAgent():
             sim_env.update_level(current_state[0][0])
 
             visited = False
-            if sim_env.done or timeit.default_timer() - start_time > 5:
+            if sim_env.done or timeit.default_timer() - start_time > 1:
                 break
 
             for i in closed_list:
