@@ -167,7 +167,7 @@ class GA():
 
     def test_generated_levels(self):
         print("TESTING GENERATED LEVELS")
-
+        avg_fit = 0
         evals = []    # (level_index, fitness)
         for i in range(len(self.current_generation)):
             gen_events = self.eval_level(self.current_generation[i])
