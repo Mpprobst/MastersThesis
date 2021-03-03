@@ -13,7 +13,7 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TILES = ['3', '-', '-', '-', 'E', 'F']
-TIME_CUTOFF = 30
+TIME_CUTOFF = 15
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
@@ -174,13 +174,13 @@ class GA():
             gen_fit = self.fitness(gen_events)
             evals.append( (i, gen_fit) )
             avg_fit += gen_fit
-        avg_fit /= len(next_generation)
+        avg_fit /= len(self.current_generation)
         print(f'TRAINED AVG FITNESS = {avg_fit*100:.2f}%')
 
-        evals = sorted(evals, key=lambda tup: tup[1])
+        evals = sorted(evals, reverse=True, key=lambda tup: tup[1])
         # at this point, only save the top 3 files
         for i in range(0,3):
-            print(f'Saving level {evals[i][0]} with fitness {(evals[i][1]):.2f}%')
+            print(f'Saving level {evals[i][0]} with fitness {(evals[i][1]*100):.2f}%')
             filename = f'{OUTPUT_DIR}generated_{i}.txt'
             file = open(filename, "w")
             file.write(self.current_generation[evals[i][0]])
