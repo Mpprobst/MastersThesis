@@ -95,8 +95,8 @@ class ScavengerEnv():
         for i in range(len(curr_levelstring)):
             if levelstring[i] == '\n':
                 row += 1
-            else:
-            #if levelstring[i] != curr_levelstring[i]:
+            #else:
+            if levelstring[i] != curr_levelstring[i]:
                 self.level[row][i % 9] = self.create_tile(levelstring[i], (row, i % 9)) # if i == 9 we should be at 1,0
         # how do we evaluate if we are done?
         # well we are done if we are in the goal state and not dead.

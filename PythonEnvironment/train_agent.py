@@ -10,4 +10,4 @@ import scavenger_env as env
 def train(num_episodes):
 
 
-env = env()
+#env = env()
