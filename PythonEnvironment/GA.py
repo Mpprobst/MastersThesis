@@ -29,6 +29,7 @@ class GA():
             self.train()
             print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
 
+
     def get_generation_files(self, path):
         generation = []
         files = [file for file in listdir(path)]
@@ -151,25 +152,35 @@ class GA():
         print(f'EVAL AVG FITNESS = {avg_fit*100:.2f}%')
         avg_fit = 0
         next_generation = []
+        # apply crossover to levels. TODO: Should the split be skewed toward the better fit level?
         for i in range((int(len(evaluations)/2))):
             crossover = self.crossover(evaluations)
             next_generation.append(crossover[0])
             next_generation.append(crossover[1])
         #print(f'Evaluation time: {(timeit.default_timer() - eval_time):.2f}\n')
-        eval_time = timeit.default_timer()
-        #print("TESTING GENERATED LEVELS")
+        # mutate the levels
         for i in range(len(next_generation)):
             next_generation[i] = self.mutate(next_generation[i])
-            filename = f'{OUTPUT_DIR}generated_{i}.txt'
-            file = open(filename, "w")
-            file.write(next_generation[i])
-            file.close()
-            gen_events = self.eval_level(next_generation[i])
-            gen_fit = self.fitness(gen_events)
-            avg_fit += gen_fit
-        avg_fit /= len(next_generation)
-
-
-        print(f'TRAINED AVG FITNESS = {avg_fit*100:.2f}%')
         self.current_generation = next_generation
         # TODO: sort the final generated into the top 3 fitness to send to Unity
+
+    def test_generated_levels(self):
+        print("TESTING GENERATED LEVELS")
+
+        evals = []    # (level_index, fitness)
+        for i in range(len(self.current_generation)):
+            gen_events = self.eval_level(self.current_generation[i])
+            gen_fit = self.fitness(gen_events)
+            evals.append( (i, gen_fit) )
+            avg_fit += gen_fit
+        avg_fit /= len(next_generation)
+        print(f'TRAINED AVG FITNESS = {avg_fit*100:.2f}%')
+
+        evals = sorted(evals, key=lambda tup: tup[1])
+        # at this point, only save the top 3 files
+        for i in range(0,3):
+            print(f'Saving level {evals[i][0]} with fitness {(evals[i][1]):.2f}%')
+            filename = f'{OUTPUT_DIR}generated_{i}.txt'
+            file = open(filename, "w")
+            file.write(self.current_generation[evals[i][0]])
+            file.close()
