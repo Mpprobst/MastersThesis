@@ -14,7 +14,7 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TILES = ['3', '-', '-', '-', 'E', 'F']
-TIME_CUTOFF = 15
+TIME_CUTOFF = 60
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
@@ -23,7 +23,11 @@ class GA():
         self.verbose = verbose
         training_path = "resources/training"
         self.current_generation = self.get_generation_files(training_path)
-
+        self.permutations = []
+        for length in range(len(self.sequence), 0, -1):
+            for perm in self.get_permutations(self.sequence, length):
+                print(f'{perm[0]} gets {perm[1]} points')
+                self.permutations.append(perm)
         for i in range(num_generations):
             gen_time = timeit.default_timer()
             print(f'\nGENERATION {i}')
@@ -83,13 +87,15 @@ class GA():
                 p.append(sequence[i])
                 if (i + 1) in positions:
                     score += 1
-            if p not in perms:
-                perms.append(p)
-                points.append(score)
+            perm = (p, score)
+            if perm not in perms:
+                perms.append(perm)
+                #points.append(score)
 
-        for i in range(len(perms)):
-            result.append( (perms[i], points[i]) )
-        return result
+        #for i in range(len(perms)):
+        #    result.append( (perms[i], points[i]) )
+            #print(f'{perms[i]} has score {points[i]}')
+        return perms
 
     # This fitness gets the sequence if it appears at all. Not halted by unfound events
     def fitness(self, events):
@@ -110,13 +116,17 @@ class GA():
             if fit > 0:
                 break
 
-            goal_perms= self.get_permutations(self.sequence, length)
+            #goal_perms = self.get_permutations(self.sequence, length)
             perms = self.get_permutations(events, length)
-            for perm, score in perms:
-                for goal, _ in goal_perms:
+
+            for goal, gscore in self.permutations:
+                for perm, pscore in perms:
                     if goal == perm:
+                        score = gscore
+                        if pscore < score:
+                            score = pscore
                         fit += score # TODO: find a way to score sequence
-                        print(f'{perm} earns {length} points')
+                        print(f'{perm} earns {score} points')
                         break
 
         # TODO: subtract fitness if the sequence was carried out, but there were extra events
