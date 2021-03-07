@@ -90,11 +90,6 @@ class GA():
             perm = (p, score)
             if perm not in perms:
                 perms.append(perm)
-                #points.append(score)
-
-        #for i in range(len(perms)):
-        #    result.append( (perms[i], points[i]) )
-            #print(f'{perms[i]} has score {points[i]}')
         return perms
 
     # This fitness gets the sequence if it appears at all. Not halted by unfound events
@@ -125,7 +120,7 @@ class GA():
                         score = gscore
                         if pscore < score:
                             score = pscore
-                        fit += score # TODO: find a way to score sequence
+                        fit += score 
                         print(f'{perm} earns {score} points')
                         break
 
