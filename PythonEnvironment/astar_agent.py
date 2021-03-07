@@ -8,6 +8,7 @@ import util
 from scavenger_env import ScavengerEnv
 import timeit
 MOVES = ['U', 'D', 'L', 'R']
+MOVE_TIME = 1
 
 class AstarAgent():
     def __init__(self, start_score, env):
@@ -64,7 +65,7 @@ class AstarAgent():
             sim_env.update_level(current_state[0][0])
 
             visited = False
-            if sim_env.done or timeit.default_timer() - start_time > 1:
+            if sim_env.done or timeit.default_timer() - start_time > MOVE_TIME:
                 break
 
             for i in closed_list:

@@ -73,10 +73,12 @@ class GA():
     def fitness(self, events):
         if len(events) == 0:
             return 0
+        """
         if events[len(events)-1] != 'W':
             if events[len(events)-1] != 'L':
                 return 0
             return 0
+        """
         goal_index = 0
         fit = 0
         for i in range(len(events)):
@@ -88,7 +90,7 @@ class GA():
 
         # TODO: subtract fitness if the sequence was carried out, but there were extra events
         if goal_index == len(self.sequence):
-            fit -= (0.25 * (len(events) - len(self.sequence)))
+            fit -= (0.15 * (len(events) - len(self.sequence)))
             if fit < 0.25:
                 fit = 0.25
 
@@ -166,7 +168,7 @@ class GA():
 
     # sort the final generation into the top 3 fitness to send to Unity
     def test_generated_levels(self):
-        print("TESTING GENERATED LEVELS")
+        print("\nTESTING GENERATED LEVELS")
         avg_fit = 0
         evals = []    # (level_index, fitness)
         for i in range(len(self.current_generation)):

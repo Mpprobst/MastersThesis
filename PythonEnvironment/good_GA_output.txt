@@ -32,6 +32,7 @@ compare ['F', 'W'] to ['F', 'F', 'W']. 75.00% fit
 compare ['F', 'W'] to ['F', 'F', 'F', 'F', 'W']. 25.00% fit
 EVAL AVG FITNESS = 59.09%
 Generation Time: 39.98
+
 TESTING GENERATED LEVELS
 compare ['F', 'W'] to ['F', 'W']. 100.00% fit
 compare ['F', 'W'] to ['F', 'W']. 100.00% fit
