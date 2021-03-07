@@ -8,12 +8,13 @@ import timeit
 import random
 from os import listdir
 from os.path import isfile, join
+from itertools import combinations
 from scavenger_env import ScavengerEnv
 from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TILES = ['3', '-', '-', '-', 'E', 'F']
-TIME_CUTOFF = 15
+TIME_CUTOFF = 60
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
@@ -22,7 +23,11 @@ class GA():
         self.verbose = verbose
         training_path = "resources/training"
         self.current_generation = self.get_generation_files(training_path)
-
+        self.permutations = []
+        for length in range(len(self.sequence), 0, -1):
+            for perm in self.get_permutations(self.sequence, length):
+                print(f'{perm[0]} gets {perm[1]} points')
+                self.permutations.append(perm)
         for i in range(num_generations):
             gen_time = timeit.default_timer()
             print(f'\nGENERATION {i}')
@@ -69,31 +74,66 @@ class GA():
         #    print(f'GAME OVER. Player {"Win" if env.player_points > 0 else "Lose"} with {env.player_points} points.\nGame Events: {env.events} total gameplay time = {(timeit.default_timer() - start_time)}')
         return env.events
 
+    # gets permutations of a sequence based on how long the permutations should be
+    # returns a list of (sequence, points)
+    def get_permutations(self, sequence, length):
+        perms = []
+        points = []
+        result = []
+        for positions in combinations(range(len(sequence)), length):
+            p = []
+            score = length
+            for i in positions:
+                p.append(sequence[i])
+                if (i + 1) in positions:
+                    score += 1
+            perm = (p, score)
+            if perm not in perms:
+                perms.append(perm)
+                #points.append(score)
+
+        #for i in range(len(perms)):
+        #    result.append( (perms[i], points[i]) )
+            #print(f'{perms[i]} has score {points[i]}')
+        return perms
+
     # This fitness gets the sequence if it appears at all. Not halted by unfound events
     def fitness(self, events):
         if len(events) == 0:
             return 0
-        """
-        if events[len(events)-1] != 'W':
-            if events[len(events)-1] != 'L':
-                return 0
+
+        if events[len(events)-1] == 'L':
             return 0
-        """
-        goal_index = 0
+
+        # fitness rework: determine the longest matching sequence
+        # assign points for correct events and additional points for proper ordering
+
+        # start with length of the desired sequence
         fit = 0
-        for i in range(len(events)):
-            if self.sequence[goal_index] == events[i]:
-                fit += 1/len(self.sequence)
-                goal_index += 1
-                if goal_index >= len(self.sequence):
-                    break
+        max_fit = len(self.sequence) * 2 - 1
+        for length in range(len(self.sequence), 0, -1):
+            # if fitness is nonzero, the longest sequence has been found
+            if fit > 0:
+                break
+
+            #goal_perms = self.get_permutations(self.sequence, length)
+            perms = self.get_permutations(events, length)
+
+            for goal, gscore in self.permutations:
+                for perm, pscore in perms:
+                    if goal == perm:
+                        score = gscore
+                        if pscore < score:
+                            score = pscore
+                        fit += score # TODO: find a way to score sequence
+                        print(f'{perm} earns {score} points')
+                        break
 
         # TODO: subtract fitness if the sequence was carried out, but there were extra events
-        if goal_index == len(self.sequence):
-            fit -= (0.15 * (len(events) - len(self.sequence)))
-            if fit < 0.25:
-                fit = 0.25
+        if len(events) > len(self.sequence):
+            fit -= (0.5 * (len(events) - len(self.sequence)))
 
+        fit /= max_fit
         print(f'compare {self.sequence} to {events}. {(fit * 100):.2f}% fit')
 
         return fit
