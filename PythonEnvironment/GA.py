@@ -55,7 +55,6 @@ class GA():
                 print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
             self.test_generated_levels()
 
-
     def get_generation_files(self, path):
         generation = []
         files = [file for file in listdir(path)]
@@ -103,7 +102,8 @@ class GA():
             perm = (p, score)
             if perm not in perms:
                 perms.append(perm)
-        # TODO: Sort these based score, ensures best fit is counted if it exists
+        # Sort based score, ensures best fit is counted if it exists
+        perms = sorted(perms, reverse=True, key=lambda tup: tup[1])
         return perms
 
     # This fitness gets the sequence if it appears at all. Not halted by unfound events
@@ -182,7 +182,14 @@ class GA():
                 mutated += level[i]
             else:
                 if random.random() < MUTATION_PROB:
-                    tile = self.get_weighted_random(self.tiles)[0]
+                    # dont allow a tile to mutate into itself
+                    tiles = self.tiles.copy()
+                    for t in tiles:
+                        if t[0] == level[i]:
+                            tiles.remove(t)
+                            break
+                    tile = self.get_weighted_random(tiles)[0]
+                    # print(f'mutate {level[i]} into {tile}')
                     mutated += tile
                 else:
                     mutated += level[i]
@@ -204,7 +211,7 @@ class GA():
             level_count += 1
             avg_fit += fitness
 
-        avg_fit /= level_count
+        avg_fit /= (level_count-1)
         print(f'EVAL AVG FITNESS = {avg_fit*100:.2f}%')
         next_generation = []
         # apply crossover to levels. TODO: Should the split be skewed toward the better fit level?
@@ -218,7 +225,6 @@ class GA():
             next_generation[i] = self.mutate(next_generation[i])
         self.current_generation = next_generation
         return avg_fit
-        # TODO: update the self.tile weights if there aren't enough of the desired event
 
     # sort the final generation into the top 3 fitness to send to Unity
     def test_generated_levels(self):
