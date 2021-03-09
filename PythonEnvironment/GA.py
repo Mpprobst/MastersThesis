@@ -4,6 +4,7 @@ Purpose: implements a genetic algorithm that generates levels that are optimized
 to encourage a specific series of events.
 Author: Michael Probst
 """
+import csv
 import timeit
 import random
 from os import listdir
@@ -13,8 +14,8 @@ from scavenger_env import ScavengerEnv
 from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
-TILES = ['3', '-', '-', '-', 'E', 'F']
-TIME_CUTOFF = 60
+TIME_CUTOFF = 15
+MUTATION_PROB = 0.01
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
@@ -22,18 +23,37 @@ class GA():
         self.sequence = sequence
         self.verbose = verbose
         training_path = "resources/training"
+        self.tiles = [ ('-', 6), ('F', 1), ('3', 1), ('E', 1) ]
+        for i in range(len(sequence)):
+            for j in range(len(self.tiles)):
+                if sequence[i] == self.tiles[j][0]:
+                    self.tiles[j] = (self.tiles[j][0], self.tiles[j][1] + 1)
+                elif sequence[i] == 'X':
+                    self.tiles[2] = (self.tiles[2][0], self.tiles[2][1] + 1)
+                    break
+        print(f'\nTile mutation probabilities:')
+        total_weight = sum(weight for _, weight in self.tiles)
+        for tile in self.tiles:
+            print(f'P(\'{tile[0]}\')={(tile[1]/total_weight):.2f}')
+
         self.current_generation = self.get_generation_files(training_path)
         self.permutations = []
         for length in range(len(self.sequence), 0, -1):
             for perm in self.get_permutations(self.sequence, length):
-                print(f'{perm[0]} gets {perm[1]} points')
+                #print(f'{perm[0]} gets {perm[1]} points')
                 self.permutations.append(perm)
-        for i in range(num_generations):
-            gen_time = timeit.default_timer()
-            print(f'\nGENERATION {i}')
-            self.train()
-            print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
-        self.test_generated_levels()
+
+        # Generate levels
+        outfile = "resources/output/results.csv"
+        with open(outfile, 'w', newline = '') as csvfile:
+            writer = csv.writer(csvfile, delimiter = ',')
+            for i in range(num_generations):
+                gen_time = timeit.default_timer()
+                print(f'\nGENERATION {i}')
+                fit_val = self.train()
+                writer.writerow([i, fit_val])
+                print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
+            self.test_generated_levels()
 
 
     def get_generation_files(self, path):
@@ -51,27 +71,19 @@ class GA():
         return generation
 
     def eval_level(self, level):
-        env = ScavengerEnv(level, self.verbose)
+        env = ScavengerEnv(level, False)
         agent = AstarAgent(30, env)
         move_count = 0
 
         start_time = timeit.default_timer()
         move_time = start_time
         while (not env.done and move_count < 50):
-            if self.verbose:
-                env.print_env()
             move = agent.suggest_move(env)
-            if self.verbose:
-                print(f'player move {move}')
             env.move(move)
-            if self.verbose:
-                print("")
             if timeit.default_timer() - start_time > TIME_CUTOFF:
                 #print("Aborting due to time constraint")
                 break
 
-        #if self.verbose:
-        #    print(f'GAME OVER. Player {"Win" if env.player_points > 0 else "Lose"} with {env.player_points} points.\nGame Events: {env.events} total gameplay time = {(timeit.default_timer() - start_time)}')
         return env.events
 
     # gets permutations of a sequence based on how long the permutations should be
@@ -85,6 +97,7 @@ class GA():
             score = length
             for i in positions:
                 p.append(sequence[i])
+                    # assign points for correct events and additional points for proper ordering
                 if (i + 1) in positions:
                     score += 1
             perm = (p, score)
@@ -100,9 +113,7 @@ class GA():
         if events[len(events)-1] == 'L':
             return 0
 
-        # fitness rework: determine the longest matching sequence
-        # assign points for correct events and additional points for proper ordering
-
+        # determine the longest matching sequence
         # start with length of the desired sequence
         fit = 0
         max_fit = len(self.sequence) * 2 - 1
@@ -111,45 +122,47 @@ class GA():
             if fit > 0:
                 break
 
-            #goal_perms = self.get_permutations(self.sequence, length)
             perms = self.get_permutations(events, length)
-
+            # prevent two of the same sequences adding to the score when they
+            # have the same sequence, but differ in points
+            used = []   # list of sequeces that have been used to add score
             for goal, gscore in self.permutations:
                 for perm, pscore in perms:
-                    if goal == perm:
+                    if goal == perm and perm not in used:
                         score = gscore
                         if pscore < score:
                             score = pscore
-                        fit += score 
-                        print(f'{perm} earns {score} points')
+                        fit += score
+                        used.append(perm)
+                        #print(f'{perm} earns {score} points')
                         break
 
-        # TODO: subtract fitness if the sequence was carried out, but there were extra events
+        # if agent triggered excess events, penalize
         if len(events) > len(self.sequence):
-            fit -= (0.5 * (len(events) - len(self.sequence)))
-
+            fit -= (0.25 * (len(events) - len(self.sequence)))
+        if fit < 0:
+            fit = 0
         fit /= max_fit
-        print(f'compare {self.sequence} to {events}. {(fit * 100):.2f}% fit')
-
         return fit
 
-    # return a level at random based on a weighted probablity.
-    def get_random_level(self, evals):
-        total_prob = sum(fit for _, fit in evals)
+    # return an item at random based on a weighted probablity.
+    def get_weighted_random(self, item):
+        total_prob = sum(weight for _, weight in item)
         rand = random.uniform(0, total_prob)
-        for i in range(len(evals)):
-            if evals[i][1] < rand:
-                return evals[i]
-            else:
-                rand -= evals[i][1]
 
-        return evals[0]
+        for i in range(len(item)):
+            if rand < item[i][1]:
+                return item[i]
+            else:
+                rand -= item[i][1]
+
+        return item[0]
 
     # takes 2 levels, slices them at a random point, and swaps them. Returns both levels
     def crossover(self, evaluations):
-        level1 = self.get_random_level(evaluations)
+        level1 = self.get_weighted_random(evaluations)
         evaluations.remove(level1)
-        level2 = self.get_random_level(evaluations)
+        level2 = self.get_weighted_random(evaluations)
         evaluations.append(level1)
         level1 = level1[0]
         level2 = level2[0]
@@ -167,8 +180,9 @@ class GA():
             if level[i] == '\n' or level[i] == 'S' or level[i] == 'G':
                 mutated += level[i]
             else:
-                if random.random() < 0.02:
-                    mutated += random.choice(TILES)
+                if random.random() < MUTATION_PROB:
+                    tile = self.get_weighted_random(self.tiles)[0]
+                    mutated += tile
                 else:
                     mutated += level[i]
         return mutated
@@ -182,13 +196,15 @@ class GA():
         for level in self.current_generation:
             events = self.eval_level(level)
             fitness = self.fitness(events)
+            #print(f'level {level_count}')
+            print(f'compare {self.sequence} to {events}. {(fitness * 100):.2f}% fit')
+            #print(f'{level}')
             evaluations.append( (level, fitness) )
             level_count += 1
             avg_fit += fitness
 
         avg_fit /= level_count
         print(f'EVAL AVG FITNESS = {avg_fit*100:.2f}%')
-        avg_fit = 0
         next_generation = []
         # apply crossover to levels. TODO: Should the split be skewed toward the better fit level?
         for i in range((int(len(evaluations)/2))):
@@ -200,6 +216,8 @@ class GA():
         for i in range(len(next_generation)):
             next_generation[i] = self.mutate(next_generation[i])
         self.current_generation = next_generation
+        return avg_fit
+        # TODO: update the self.tile weights if there aren't enough of the desired event
 
     # sort the final generation into the top 3 fitness to send to Unity
     def test_generated_levels(self):

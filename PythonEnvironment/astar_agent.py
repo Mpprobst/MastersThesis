@@ -8,7 +8,7 @@ import util
 from scavenger_env import ScavengerEnv
 import timeit
 MOVES = ['U', 'D', 'L', 'R']
-MOVE_TIME = 10
+MOVE_TIME = 1
 
 class AstarAgent():
     def __init__(self, start_score, env):
