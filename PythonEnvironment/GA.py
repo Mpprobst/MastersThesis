@@ -14,7 +14,7 @@ from scavenger_env import ScavengerEnv
 from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
-TIME_CUTOFF = 15
+TIME_CUTOFF = 10
 MUTATION_PROB = 0.01
 
 class GA():
