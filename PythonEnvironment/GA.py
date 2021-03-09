@@ -15,7 +15,7 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TIME_CUTOFF = 10
-MUTATION_PROB = 0.02
+MUTATION_PROB = 0.03
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
@@ -140,7 +140,7 @@ class GA():
 
         # if agent triggered excess events, penalize
         if len(events) > len(self.sequence):
-            fit -= (0.25 * (len(events) - len(self.sequence))) #consider lowering this
+            fit -= (0.5 * (len(events) - len(self.sequence))) #consider lowering this
         if fit < 0:
             fit = 0
         fit /= max_fit
@@ -182,13 +182,31 @@ class GA():
                 mutated += level[i]
             else:
                 if random.random() < MUTATION_PROB:
+
+                    tile = self.get_weighted_random(self.tiles)[0]
+                    """
                     # dont allow a tile to mutate into itself
-                    tiles = self.tiles.copy()
-                    for t in tiles:
-                        if t[0] == level[i]:
-                            tiles.remove(t)
-                            break
+                     tiles = self.tiles.copy()
+                     for t in tiles:
+                         if t[0] == level[i]:
+                             tiles.remove(t)
+                             break
                     tile = self.get_weighted_random(tiles)[0]
+                    """
+                    # when a tile is picked, reduce its probability a little
+                    for t in range(len(self.tiles)):
+                        modifier = 0.1
+                        if self.tiles[t][0] == '-':
+                            modifier = 0.35
+                        if self.tiles[t][0] in self.sequence:
+                            modifier += 0.1
+                        if self.tiles[t][0] == tile:
+                            modifier = -0.25
+                        new_weight = self.tiles[t][1] + modifier
+                        if new_weight < 0:
+                            new_weight = 0.1
+                        self.tiles[t] = (self.tiles[t][0], new_weight)
+
                     # print(f'mutate {level[i]} into {tile}')
                     mutated += tile
                 else:
@@ -212,7 +230,13 @@ class GA():
             avg_fit += fitness
 
         avg_fit /= (level_count-1)
-        print(f'EVAL AVG FITNESS = {avg_fit*100:.2f}%')
+
+        total_weight = sum(weight for _, weight in self.tiles)
+        mut_prob_string = ""
+        for t in self.tiles:
+            mut_prob_string += f'P(\'{t[0]}\') = {(t[1]/total_weight):.2f}, '
+
+        print(f'EVAL AVG FITNESS = {avg_fit*100:.2f}% mutation probs: {mut_prob_string}')
         next_generation = []
         # apply crossover to levels. TODO: Should the split be skewed toward the better fit level?
         for i in range((int(len(evaluations)/2))):
