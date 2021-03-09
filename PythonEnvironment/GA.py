@@ -15,7 +15,7 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TIME_CUTOFF = 10
-MUTATION_PROB = 0.03
+MUTATION_PROB = 0.02
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
@@ -23,7 +23,7 @@ class GA():
         self.sequence = sequence
         self.verbose = verbose
         training_path = "resources/training"
-        self.tiles = [ ('-', 6), ('F', 1), ('3', 1), ('E', 1) ]
+        self.tiles = [ ('-', 10), ('F', 1), ('3', 1), ('E', 1) ]
         for i in range(len(sequence)):
             for j in range(len(self.tiles)):
                 if sequence[i] == self.tiles[j][0]:
