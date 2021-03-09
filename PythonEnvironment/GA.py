@@ -15,7 +15,7 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TIME_CUTOFF = 10
-MUTATION_PROB = 0.01
+MUTATION_PROB = 0.03
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
@@ -103,6 +103,7 @@ class GA():
             perm = (p, score)
             if perm not in perms:
                 perms.append(perm)
+        # TODO: Sort these based score, ensures best fit is counted if it exists
         return perms
 
     # This fitness gets the sequence if it appears at all. Not halted by unfound events
@@ -139,7 +140,7 @@ class GA():
 
         # if agent triggered excess events, penalize
         if len(events) > len(self.sequence):
-            fit -= (0.25 * (len(events) - len(self.sequence)))
+            fit -= (0.25 * (len(events) - len(self.sequence))) #consider lowering this
         if fit < 0:
             fit = 0
         fit /= max_fit
