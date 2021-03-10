@@ -15,7 +15,7 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TIME_CUTOFF = 10
-MUTATION_PROB = 0.03
+MUTATION_PROB = 0.1
 
 class GA():
     def __init__(self, sequence, num_generations, verbose=False):
