@@ -144,6 +144,45 @@ class GA():
         if fit < 0:
             fit = 0
         fit /= max_fit
+
+        # see which events occured too many times and reduce prob
+        excess_events = events.copy()
+        seq = self.sequence.copy()
+        prev_len = 0
+        while len(seq) > 0 and len(seq) != prev_len:
+            prev_len = len(seq)
+            for s in seq:
+                if s in excess_events:
+                    excess_events.remove(s)
+                    seq.remove(s)
+                    break
+
+        for event in excess_events:
+            for i in range(len(self.tiles)):
+                if self.tiles[i][0] == event:
+                    new_prob = self.tiles[i][1] - 0.1
+                    if new_prob < 0.1:
+                        new_prob = 0.1
+                    self.tiles[i] = ( self.tiles[i][0], new_prob )
+
+        # see which events didnt occur enough and make them more likely
+        diff_events = self.sequence.copy()
+        seq = events.copy()
+        prev_len = 0
+        while len(seq) > 0 and len(seq) != prev_len:
+            prev_len = len(seq)
+            for s in seq:
+                if s in diff_events:
+                    diff_events.remove(s)
+                    seq.remove(s)
+                    break
+
+        for event in diff_events:
+            for i in range(len(self.tiles)):
+                if self.tiles[i][0] == event:
+                    new_prob = self.tiles[i][1] + 0.1
+                    self.tiles[i] = ( self.tiles[i][0], new_prob )
+
         return fit
 
     # return an item at random based on a weighted probablity.
@@ -183,14 +222,14 @@ class GA():
             else:
                 if random.random() < MUTATION_PROB:
 
-                    tile = self.get_weighted_random(self.tiles)[0]
-                    """
-                    # dont allow a tile to mutate into itself
-                     tiles = self.tiles.copy()
-                     for t in tiles:
-                         if t[0] == level[i]:
-                             tiles.remove(t)
-                             break
+                    #tile = self.get_weighted_random(self.tiles)[0]
+
+                    # reduce chances of tile turning into itself
+                    tiles = self.tiles.copy()
+                    for t in tiles:
+                        if t[0] == level[i]:
+                            t = ( t[0], t[1]/2 )
+                            break
                     tile = self.get_weighted_random(tiles)[0]
                     """
                     # when a tile is picked, reduce its probability a little
@@ -206,7 +245,7 @@ class GA():
                         if new_weight < 0:
                             new_weight = 0.1
                         self.tiles[t] = (self.tiles[t][0], new_weight)
-
+                    """
                     # print(f'mutate {level[i]} into {tile}')
                     mutated += tile
                 else:
