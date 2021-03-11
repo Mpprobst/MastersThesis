@@ -56,5 +56,5 @@ while not done:
         done = True
 
 print(f'desired events: {events}')
-genetic_algorithm = GA(events, args.gens, args.verbose, mutations)
+genetic_algorithm = GA(events, args.gens, mutations, args.verbose)
 print(f'Total Runtime: {(timeit.default_timer() - time):.2f}')

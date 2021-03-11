@@ -18,20 +18,18 @@ TIME_CUTOFF = 10
 MUTATION_PROB = 0.10
 
 class GA():
-    def __init__(self, sequence, num_generations, verbose=False, mutation_strategies):
+    def __init__(self, sequence, num_generations, mutation_strategies, verbose=False):
         self.current_generation = []        # array of level strings currently being evalutated
         self.sequence = sequence
         self.verbose = verbose
         self.mutation_strategies = mutation_strategies
         training_path = "resources/training"
-        self.tiles = [ ('-', 10), ('F', 1), ('3', 1), ('E', 1) ]
+        self.tiles = [ ('-', 10), ('F', 1), ('X', 1), ('E', 1) ]
         if "AN" in self.mutation_strategies:
             for i in range(len(sequence)):
                 for j in range(len(self.tiles)):
                     if sequence[i] == self.tiles[j][0]:
                         self.tiles[j] = (self.tiles[j][0], self.tiles[j][1] + 1)
-                    elif sequence[i] == 'X':
-                        self.tiles[2] = (self.tiles[2][0], self.tiles[2][1] + 1)
                         break
 
         print(f'\nTile mutation probabilities:')
@@ -222,7 +220,7 @@ class GA():
         return (cross1, cross2)
 
     # when a tile is picked, reduce its probability a little
-    def reduce_when_used(self):
+    def reduce_when_used(self, tile):
         for t in range(len(self.tiles)):
             modifier = 0.1
             if self.tiles[t][0] == '-':
@@ -253,13 +251,15 @@ class GA():
                             if t[0] == level[i]:
                                 t = ( t[0], t[1]/2 )
                                 break
-                                
+
                     tile = self.get_weighted_random(tiles)[0]
 
                     if "RWU" in self.mutation_strategies:
-                        self.reduce_when_used()
+                        self.reduce_when_used(tile)
 
                     # print(f'mutate {level[i]} into {tile}')
+                    if tile == 'X':
+                        tile = '3'
                     mutated += tile
                 else:
                     mutated += level[i]
