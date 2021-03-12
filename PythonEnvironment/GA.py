@@ -15,10 +15,12 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TIME_CUTOFF = 10
-MUTATION_PROB = 0.10
+MUTATION_PROB = 0.12
 
 class GA():
     def __init__(self, sequence, num_generations, mutation_strategies, verbose=False):
+        self.mutation_prob = MUTATION_PROB
+        step = MUTATION_PROB / num_generations
         self.current_generation = []        # array of level strings currently being evalutated
         self.sequence = sequence
         self.verbose = verbose
@@ -53,6 +55,13 @@ class GA():
                 print(f'\nGENERATION {i}')
                 fit_val = self.train()
                 writer.writerow([i, fit_val])
+                # linear decay
+                #if fit_val > 0.75:
+                #exponential decay
+                self.mutation_prob = 1.15 - 0.99 ** -i
+                if self.mutation_prob < 0.03:
+                    self.mutation_prob = 0.03
+                print(f'mutation prob: {self.mutation_prob}' )
                 print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
             self.test_generated_levels()
 
@@ -222,14 +231,7 @@ class GA():
     # when a tile is picked, reduce its probability a little
     def reduce_when_used(self, tile):
         for t in range(len(self.tiles)):
-            modifier = 0.1
-            if self.tiles[t][0] == '-':
-                modifier = 0.35
-            if self.tiles[t][0] in self.sequence:
-                modifier += 0.1
-            if self.tiles[t][0] == tile:
-                modifier = -0.25
-            new_weight = self.tiles[t][1] + modifier
+            new_weight = self.tiles[t][1] - 0.25
             if new_weight < 0:
                 new_weight = 0.1
             self.tiles[t] = (self.tiles[t][0], new_weight)
@@ -240,7 +242,7 @@ class GA():
             if level[i] == '\n' or level[i] == 'S' or level[i] == 'G':
                 mutated += level[i]
             else:
-                if random.random() < MUTATION_PROB:
+                if random.random() < self.mutation_prob:
 
                     #tile = self.get_weighted_random(self.tiles)[0]
 
