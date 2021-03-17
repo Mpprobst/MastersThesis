@@ -15,7 +15,7 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TIME_CUTOFF = 10
-MUTATION_PROB = 0.12
+MUTATION_PROB = 0.15
 
 class GA():
     def __init__(self, sequence, num_generations, mutation_strategies, verbose=False):
@@ -55,12 +55,12 @@ class GA():
                 print(f'\nGENERATION {i}')
                 fit_val = self.train()
                 writer.writerow([i, fit_val])
-                # linear decay
-                #if fit_val > 0.75:
+
                 #exponential decay
-                self.mutation_prob = 1.15 - 0.99 ** -i
+                self.mutation_prob = (1 + MUTATION_PROB) - 0.99 ** -i
                 if self.mutation_prob < 0.03:
                     self.mutation_prob = 0.03
+
                 print(f'mutation prob: {self.mutation_prob}' )
                 print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
             self.test_generated_levels()
