@@ -15,22 +15,25 @@ from astar_agent import AstarAgent
 
 OUTPUT_DIR = "resources/output/"
 TIME_CUTOFF = 10
-MUTATION_PROB = 0.10
+MUTATION_PROB = 0.15
 
 class GA():
-    def __init__(self, sequence, num_generations, verbose=False):
+    def __init__(self, sequence, num_generations, mutation_strategies, verbose=False):
+        self.mutation_prob = MUTATION_PROB
+        step = MUTATION_PROB / num_generations
         self.current_generation = []        # array of level strings currently being evalutated
         self.sequence = sequence
         self.verbose = verbose
+        self.mutation_strategies = mutation_strategies
         training_path = "resources/training"
-        self.tiles = [ ('-', 10), ('F', 1), ('3', 1), ('E', 1) ]
-        for i in range(len(sequence)):
-            for j in range(len(self.tiles)):
-                if sequence[i] == self.tiles[j][0]:
-                    self.tiles[j] = (self.tiles[j][0], self.tiles[j][1] + 1)
-                elif sequence[i] == 'X':
-                    self.tiles[2] = (self.tiles[2][0], self.tiles[2][1] + 1)
-                    break
+        self.tiles = [ ('-', 10), ('F', 1), ('X', 1), ('E', 1) ]
+        if "AN" in self.mutation_strategies:
+            for i in range(len(sequence)):
+                for j in range(len(self.tiles)):
+                    if sequence[i] == self.tiles[j][0]:
+                        self.tiles[j] = (self.tiles[j][0], self.tiles[j][1] + 1)
+                        break
+
         print(f'\nTile mutation probabilities:')
         total_weight = sum(weight for _, weight in self.tiles)
         for tile in self.tiles:
@@ -52,6 +55,13 @@ class GA():
                 print(f'\nGENERATION {i}')
                 fit_val = self.train()
                 writer.writerow([i, fit_val])
+
+                #exponential decay
+                self.mutation_prob = (1 + MUTATION_PROB) - 0.99 ** -i
+                if self.mutation_prob < 0.03:
+                    self.mutation_prob = 0.03
+
+                print(f'mutation prob: {self.mutation_prob}' )
                 print(f'Generation Time: {(timeit.default_timer() - gen_time):.2f}')
             self.test_generated_levels()
 
@@ -80,7 +90,6 @@ class GA():
             move = agent.suggest_move(env)
             env.move(move)
             if timeit.default_timer() - start_time > TIME_CUTOFF:
-                #print("Aborting due to time constraint")
                 break
 
         return env.events
@@ -105,6 +114,46 @@ class GA():
         # Sort based score, ensures best fit is counted if it exists
         perms = sorted(perms, reverse=True, key=lambda tup: tup[1])
         return perms
+
+    # mutation technique to modify tile probabilities based on how much events are observed
+    def need_based(self, events):
+        # see which events occured too many times and reduce prob
+        excess_events = events.copy()
+        seq = self.sequence.copy()
+        prev_len = 0
+        while len(seq) > 0 and len(seq) != prev_len:
+            prev_len = len(seq)
+            for s in seq:
+                if s in excess_events:
+                    excess_events.remove(s)
+                    seq.remove(s)
+                    break
+
+        for event in excess_events:
+            for i in range(len(self.tiles)):
+                if self.tiles[i][0] == event:
+                    new_prob = self.tiles[i][1] - 0.1
+                    if new_prob < 0.1:
+                        new_prob = 0.1
+                    self.tiles[i] = ( self.tiles[i][0], new_prob )
+
+        # see which events didnt occur enough and make them more likely
+        diff_events = self.sequence.copy()
+        seq = events.copy()
+        prev_len = 0
+        while len(seq) > 0 and len(seq) != prev_len:
+            prev_len = len(seq)
+            for s in seq:
+                if s in diff_events:
+                    diff_events.remove(s)
+                    seq.remove(s)
+                    break
+
+        for event in diff_events:
+            for i in range(len(self.tiles)):
+                if self.tiles[i][0] == event:
+                    new_prob = self.tiles[i][1] + 0.1
+                    self.tiles[i] = ( self.tiles[i][0], new_prob )
 
     # This fitness gets the sequence if it appears at all. Not halted by unfound events
     def fitness(self, events):
@@ -145,43 +194,8 @@ class GA():
             fit = 0
         fit /= max_fit
 
-        # see which events occured too many times and reduce prob
-        excess_events = events.copy()
-        seq = self.sequence.copy()
-        prev_len = 0
-        while len(seq) > 0 and len(seq) != prev_len:
-            prev_len = len(seq)
-            for s in seq:
-                if s in excess_events:
-                    excess_events.remove(s)
-                    seq.remove(s)
-                    break
-
-        for event in excess_events:
-            for i in range(len(self.tiles)):
-                if self.tiles[i][0] == event:
-                    new_prob = self.tiles[i][1] - 0.1
-                    if new_prob < 0.1:
-                        new_prob = 0.1
-                    self.tiles[i] = ( self.tiles[i][0], new_prob )
-
-        # see which events didnt occur enough and make them more likely
-        diff_events = self.sequence.copy()
-        seq = events.copy()
-        prev_len = 0
-        while len(seq) > 0 and len(seq) != prev_len:
-            prev_len = len(seq)
-            for s in seq:
-                if s in diff_events:
-                    diff_events.remove(s)
-                    seq.remove(s)
-                    break
-
-        for event in diff_events:
-            for i in range(len(self.tiles)):
-                if self.tiles[i][0] == event:
-                    new_prob = self.tiles[i][1] + 0.1
-                    self.tiles[i] = ( self.tiles[i][0], new_prob )
+        if "NB" in self.mutation_strategies:
+            self.need_based(events)
 
         return fit
 
@@ -214,39 +228,40 @@ class GA():
         cross2 = level2[top_slice] + level1[bot_slice]
         return (cross1, cross2)
 
+    # when a tile is picked, reduce its probability a little
+    def reduce_when_used(self, tile):
+        for t in range(len(self.tiles)):
+            new_weight = self.tiles[t][1] - 0.25
+            if new_weight < 0:
+                new_weight = 0.1
+            self.tiles[t] = (self.tiles[t][0], new_weight)
+
     def mutate(self, level):
         mutated = ""
         for i in range(0, len(level)):
             if level[i] == '\n' or level[i] == 'S' or level[i] == 'G':
                 mutated += level[i]
             else:
-                if random.random() < MUTATION_PROB:
+                if random.random() < self.mutation_prob:
 
                     #tile = self.get_weighted_random(self.tiles)[0]
 
-                    # reduce chances of tile turning into itself
                     tiles = self.tiles.copy()
-                    for t in tiles:
-                        if t[0] == level[i]:
-                            t = ( t[0], t[1]/2 )
-                            break
+                    if "MM" in self.mutation_strategies:
+                        # reduce chances of tile turning into itself
+                        for t in tiles:
+                            if t[0] == level[i]:
+                                t = ( t[0], t[1]/2 )
+                                break
+
                     tile = self.get_weighted_random(tiles)[0]
-                    """
-                    # when a tile is picked, reduce its probability a little
-                    for t in range(len(self.tiles)):
-                        modifier = 0.1
-                        if self.tiles[t][0] == '-':
-                            modifier = 0.35
-                        if self.tiles[t][0] in self.sequence:
-                            modifier += 0.1
-                        if self.tiles[t][0] == tile:
-                            modifier = -0.25
-                        new_weight = self.tiles[t][1] + modifier
-                        if new_weight < 0:
-                            new_weight = 0.1
-                        self.tiles[t] = (self.tiles[t][0], new_weight)
-                    """
+
+                    if "RWU" in self.mutation_strategies:
+                        self.reduce_when_used(tile)
+
                     # print(f'mutate {level[i]} into {tile}')
+                    if tile == 'X':
+                        tile = '3'
                     mutated += tile
                 else:
                     mutated += level[i]
