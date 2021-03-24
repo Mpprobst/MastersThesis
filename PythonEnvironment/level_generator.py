@@ -17,10 +17,6 @@ EVENT_CODES = { 'E' : 'Enemies Attack',
 parser = argparse.ArgumentParser(description='Define the problem to solve.')
 parser.add_argument('--gens', type=int, default = 1, help='Number of generations the genetic algorithm generates.')
 parser.add_argument('--verbose', help='Visualize the environment.', action='store_true')
-parser.add_argument('--AN', help='Use the author needs mutation strategy', action='store_true')
-parser.add_argument('--RWU', help='Use the recude when used mutation strategy', action='store_true')
-parser.add_argument('--MM', help='Use the meaningful mutation strategy', action='store_true')
-parser.add_argument('--NB', help='Use the need based mutation strategy', action='store_true')
 
 args = parser.parse_args()
 
@@ -29,17 +25,6 @@ events = []
 print(f'Event Options: ')
 for key in EVENT_CODES.keys():
     print(f'{key} -> {EVENT_CODES[key]}')
-
-mutations = []
-if args.AN:
-    mutations.append("AN")
-if args.RWU:
-    mutations.append("RWU")
-if args.MM:
-    mutations.append("MM")
-if args.NB:
-    mutations.append("NB")
-
 
 time = timeit.default_timer()
 print(f'Complete your sequence with an end condition: W or L')
@@ -56,5 +41,5 @@ while not done:
         done = True
 
 print(f'desired events: {events}')
-genetic_algorithm = GA(events, args.gens, mutations, args.verbose)
+genetic_algorithm = GA(events, args.gens, args.verbose)
 print(f'Total Runtime: {(timeit.default_timer() - time):.2f}')

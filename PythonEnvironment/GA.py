@@ -18,21 +18,19 @@ TIME_CUTOFF = 10
 MUTATION_PROB = 0.15
 
 class GA():
-    def __init__(self, sequence, num_generations, mutation_strategies, verbose=False):
+    def __init__(self, sequence, num_generations, verbose=False):
         self.mutation_prob = MUTATION_PROB
         step = MUTATION_PROB / num_generations
         self.current_generation = []        # array of level strings currently being evalutated
         self.sequence = sequence
         self.verbose = verbose
-        self.mutation_strategies = mutation_strategies
         training_path = "resources/training"
         self.tiles = [ ('-', 10), ('F', 1), ('X', 1), ('E', 1) ]
-        if "AN" in self.mutation_strategies:
-            for i in range(len(sequence)):
-                for j in range(len(self.tiles)):
-                    if sequence[i] == self.tiles[j][0]:
-                        self.tiles[j] = (self.tiles[j][0], self.tiles[j][1] + 1)
-                        break
+        for i in range(len(sequence)):
+            for j in range(len(self.tiles)):
+                if sequence[i] == self.tiles[j][0]:
+                    self.tiles[j] = (self.tiles[j][0], self.tiles[j][1] + 1)
+                    break
 
         print(f'\nTile mutation probabilities:')
         total_weight = sum(weight for _, weight in self.tiles)
@@ -105,7 +103,7 @@ class GA():
             score = length
             for i in positions:
                 p.append(sequence[i])
-                    # assign points for correct events and additional points for proper ordering
+                # assign points for correct events and additional points for proper ordering
                 if (i + 1) in positions:
                     score += 1
             perm = (p, score)
@@ -194,8 +192,8 @@ class GA():
             fit = 0
         fit /= max_fit
 
-        if "NB" in self.mutation_strategies:
-            self.need_based(events)
+        # update mutation probabilities based on fitness
+        self.need_based(events)
 
         return fit
 
@@ -228,14 +226,6 @@ class GA():
         cross2 = level2[top_slice] + level1[bot_slice]
         return (cross1, cross2)
 
-    # when a tile is picked, reduce its probability a little
-    def reduce_when_used(self, tile):
-        for t in range(len(self.tiles)):
-            new_weight = self.tiles[t][1] - 0.25
-            if new_weight < 0:
-                new_weight = 0.1
-            self.tiles[t] = (self.tiles[t][0], new_weight)
-
     def mutate(self, level):
         mutated = ""
         for i in range(0, len(level)):
@@ -243,21 +233,7 @@ class GA():
                 mutated += level[i]
             else:
                 if random.random() < self.mutation_prob:
-
-                    #tile = self.get_weighted_random(self.tiles)[0]
-
-                    tiles = self.tiles.copy()
-                    if "MM" in self.mutation_strategies:
-                        # reduce chances of tile turning into itself
-                        for t in tiles:
-                            if t[0] == level[i]:
-                                t = ( t[0], t[1]/2 )
-                                break
-
-                    tile = self.get_weighted_random(tiles)[0]
-
-                    if "RWU" in self.mutation_strategies:
-                        self.reduce_when_used(tile)
+                    tile = self.get_weighted_random(self.tiles)[0]
 
                     # print(f'mutate {level[i]} into {tile}')
                     if tile == 'X':
@@ -276,12 +252,12 @@ class GA():
         for level in self.current_generation:
             events = self.eval_level(level)
             fitness = self.fitness(events)
-            #print(f'level {level_count}')
             print(f'compare {self.sequence} to {events}. {(fitness * 100):.2f}% fit')
-            #print(f'{level}')
-            evaluations.append( (level, fitness) )
-            level_count += 1
-            avg_fit += fitness
+            # levels with 0 fitness are impossible and should be removed from evaluation
+            if fitness > 0:
+                evaluations.append( (level, fitness) )
+                level_count += 1
+                avg_fit += fitness
 
         avg_fit /= (level_count-1)
 
@@ -312,16 +288,20 @@ class GA():
         for i in range(len(self.current_generation)):
             gen_events = self.eval_level(self.current_generation[i])
             gen_fit = self.fitness(gen_events)
-            evals.append( (i, gen_fit) )
-            avg_fit += gen_fit
+            if gen_fit > 0:
+                evals.append( (i, gen_fit, gen_events) )
+                avg_fit += gen_fit
         avg_fit /= len(self.current_generation)
         print(f'TRAINED AVG FITNESS = {avg_fit*100:.2f}%')
 
         evals = sorted(evals, reverse=True, key=lambda tup: tup[1])
         # at this point, only save the top 3 files
         for i in range(0,3):
+            eventstring = ""
+            for j in range(len(evals[i][2])):
+                eventstring += evals[i][2][j]
             print(f'Saving level {evals[i][0]} with fitness {(evals[i][1]*100):.2f}%')
-            filename = f'{OUTPUT_DIR}generated_{i}.txt'
+            filename = f'{OUTPUT_DIR}{i}_{eventstring}_{(evals[i][1]*100):.0f}.txt'
             file = open(filename, "w")
             file.write(self.current_generation[evals[i][0]])
             file.close()
