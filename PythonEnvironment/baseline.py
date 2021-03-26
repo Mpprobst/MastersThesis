@@ -124,7 +124,10 @@ with open(outfile, 'w', newline = '') as csvfile:
     writer = csv.writer(csvfile, delimiter = ',')
     level_count = 0
     avg_fit = 0
-    for level in levels:
+    for i in range(len(levels)):
+        if i % 100 == 0:
+            print(f'level {i}')
+        level = levels[i]
         events = eval_level(level)
         fit_val = fitness(events)
         #print(f'compare {sequence} to {events}. {(fit_val * 100):.2f}% fit')
