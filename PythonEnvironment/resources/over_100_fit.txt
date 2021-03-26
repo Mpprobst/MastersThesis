@@ -1,0 +1,4 @@
+['F', 'F', 'W'] earns 4 points
+['F', 'E', 'W'] earns 4 points
+['F', 'X', 'W'] earns 3 points
+compare ['F', 'F', 'X', 'E', 'W'] to ['F', 'E', 'X', 'F', 'W']. 122.22% fit
