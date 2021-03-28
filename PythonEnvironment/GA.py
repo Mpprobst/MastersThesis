@@ -24,7 +24,7 @@ class GA():
         self.current_generation = []        # array of level strings currently being evalutated
         self.sequence = sequence
         self.verbose = verbose
-        training_path = "resources/training"
+        training_path = "resources/training2"
         self.tiles = [ ('-', 10), ('F', 1), ('X', 1), ('E', 1) ]
         for i in range(len(sequence)):
             for j in range(len(self.tiles)):
@@ -181,14 +181,16 @@ class GA():
                         score = gscore
                         if pscore < score:
                             score = pscore
+                        used.append(perm)
                         fit += score
-                        # prevent fitness being over 100%
-                        if used_length > len(self.sequence):
-                            used.append(perm)
-                            used_length += len(perm)
-                        print(f'{perm} earns {score} points')
+                        #print(f'{perm} earns {score} points')
                         break
 
+        # prevent fitness > 100%
+        if fit > max_fit:
+            fit = max_fit
+            if events != self.sequence:
+                fit -= 0.25 * max_fit
         # if agent triggered excess events, penalize
         if len(events) > len(self.sequence):
             fit -= (0.5 * (len(events) - len(self.sequence))) #consider lowering this

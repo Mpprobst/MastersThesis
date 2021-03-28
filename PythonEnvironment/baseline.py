@@ -69,22 +69,23 @@ def fitness(events):
         # prevent two of the same sequences adding to the score when they
         # have the same sequence, but differ in points
         used = []   # list of sequeces that have been used to add score
-        used_length = 0
         for goal, gscore in permutations:
             for perm, pscore in perms:
                 if goal == perm and perm not in used:
                     score = gscore
                     if pscore < score:
                         score = pscore
+                    used.append(perm)
                     fit += score
-                    # prevent fitness being over 100%
-                    if used_length > len(sequence):
-                        used.append(perm)
-                        used_length += len(perm)
+
                     #print(f'{perm} earns {score} points')
                     break
 
     # if agent triggered excess events, penalize
+    if fit > max_fit:
+        fit = max_fit
+        if events != sequence:
+            fit -= 0.25 * max_fit
     if len(events) > len(sequence):
         fit -= (0.5 * (len(events) - len(sequence))) #consider lowering this
     if fit < 0:
