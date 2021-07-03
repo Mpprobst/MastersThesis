@@ -24,7 +24,7 @@ class GA():
         self.current_generation = []        # array of level strings currently being evalutated
         self.sequence = sequence
         self.verbose = verbose
-        training_path = "resources/training"
+        training_path = "resources/training2"
         self.tiles = [ ('-', 10), ('F', 1), ('X', 1), ('E', 1) ]
         for i in range(len(sequence)):
             for j in range(len(self.tiles)):
@@ -41,7 +41,7 @@ class GA():
         self.permutations = []
         for length in range(len(self.sequence), 0, -1):
             for perm in self.get_permutations(self.sequence, length):
-                #print(f'{perm[0]} gets {perm[1]} points')
+                print(f'{perm[0]} gets {perm[1]} points')
                 self.permutations.append(perm)
 
         # Generate levels
@@ -174,17 +174,23 @@ class GA():
             # prevent two of the same sequences adding to the score when they
             # have the same sequence, but differ in points
             used = []   # list of sequeces that have been used to add score
+            used_length = 0
             for goal, gscore in self.permutations:
                 for perm, pscore in perms:
                     if goal == perm and perm not in used:
                         score = gscore
                         if pscore < score:
                             score = pscore
-                        fit += score
                         used.append(perm)
+                        fit += score
                         #print(f'{perm} earns {score} points')
                         break
 
+        # prevent fitness > 100%
+        if fit > max_fit:
+            fit = max_fit
+            if events != self.sequence:
+                fit -= 0.25 * max_fit
         # if agent triggered excess events, penalize
         if len(events) > len(self.sequence):
             fit -= (0.5 * (len(events) - len(self.sequence))) #consider lowering this
@@ -252,10 +258,10 @@ class GA():
         for level in self.current_generation:
             events = self.eval_level(level)
             fitness = self.fitness(events)
-            print(f'compare {self.sequence} to {events}. {(fitness * 100):.2f}% fit')
+            #print(f'compare {self.sequence} to {events}. {(fitness * 100):.2f}% fit')
+            evaluations.append( (level, fitness) )
             # levels with 0 fitness are impossible and should be removed from evaluation
             if fitness > 0:
-                evaluations.append( (level, fitness) )
                 level_count += 1
                 avg_fit += fitness
 
