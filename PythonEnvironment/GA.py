@@ -41,7 +41,7 @@ class GA():
         self.permutations = []
         for length in range(len(self.sequence), 0, -1):
             for perm in self.get_permutations(self.sequence, length):
-                #print(f'{perm[0]} gets {perm[1]} points')
+                print(f'{perm[0]} gets {perm[1]} points')
                 self.permutations.append(perm)
 
         # Generate levels
@@ -258,7 +258,7 @@ class GA():
         for level in self.current_generation:
             events = self.eval_level(level)
             fitness = self.fitness(events)
-            print(f'compare {self.sequence} to {events}. {(fitness * 100):.2f}% fit')
+            #print(f'compare {self.sequence} to {events}. {(fitness * 100):.2f}% fit')
             evaluations.append( (level, fitness) )
             # levels with 0 fitness are impossible and should be removed from evaluation
             if fitness > 0:

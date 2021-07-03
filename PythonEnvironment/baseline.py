@@ -7,7 +7,7 @@ import csv
 import sys
 import timeit
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, exists
 from itertools import combinations
 from scavenger_env import ScavengerEnv
 from astar_agent import AstarAgent
@@ -100,7 +100,7 @@ def fitness(events):
 
 TRAINING_DIR = "resources/baseline"
 TIME_CUTOFF = 10
-outfile = f'{TRAINING_DIR}/_{sys.argv[1]}_baseline.csv'
+outfile = f'{TRAINING_DIR}/baseline.csv'
 sequence = list(sys.argv[1])
 print(sequence)
 permutations = []
@@ -109,35 +109,52 @@ for length in range(len(sequence), 0, -1):
         #print(f'{perm[0]} gets {perm[1]} points')
         permutations.append(perm)
 
-# get all files in the trainig dir
-files = [file for file in listdir(TRAINING_DIR)]
-levels = []
-for file in files:
-    if not file.endswith(".txt"):
-        continue
-    f = open(TRAINING_DIR + "/" + file, "r")
-    level_string = ""
-    for line in f:
-        level_string += line
-    levels.append(level_string)
-
-with open(outfile, 'w', newline = '') as csvfile:
-    writer = csv.writer(csvfile, delimiter = ',')
-    level_count = 0
-    avg_fit = 0
-    for i in range(len(levels)):
-        if i % 100 == 0:
-            print(f'level {i}')
-        level = levels[i]
-        events = eval_level(level)
-        fit_val = fitness(events)
-        #print(f'compare {sequence} to {events}. {(fit_val * 100):.2f}% fit')
-        writer.writerow([fit_val])
-
-        # levels with 0 fitness are impossible and should be removed from evaluation
-        if fit_val > 0:
-            level_count += 1
-            avg_fit += fit_val
+if exists(outfile):
+    with open(outfile, newline='') as csvfile:
+        reader = csv.reader(outfile, delimiter=',')
+        avg_fit = 0
+        level_count = 0
+        for row in reader:
+            print(row)
+            fit_val = fitness(row)
+            # levels with 0 fitness are impossible and should be removed from evaluation
+            if fit_val > 0:
+                level_count += 1
+                avg_fit += fit_val
 
     avg_fit /= (level_count-1)
     print(f'total avg fit: {(avg_fit*100):.2f}%')
+
+else:
+    # get all files in the trainig dir
+    files = [file for file in listdir(TRAINING_DIR)]
+    levels = []
+    for file in files:
+        if not file.endswith(".txt"):
+            continue
+        f = open(TRAINING_DIR + "/" + file, "r")
+        level_string = ""
+        for line in f:
+            level_string += line
+        levels.append(level_string)
+
+    with open(outfile, 'w', newline = '') as csvfile:
+        writer = csv.writer(csvfile, delimiter = ',')
+        level_count = 0
+        avg_fit = 0
+        for i in range(len(levels)):
+            if i % 100 == 0:
+                print(f'level {i}')
+            level = levels[i]
+            events = eval_level(level)
+            fit_val = fitness(events)
+            #print(f'compare {sequence} to {events}. {(fit_val * 100):.2f}% fit')
+            writer.writerow(events)
+
+            # levels with 0 fitness are impossible and should be removed from evaluation
+            if fit_val > 0:
+                level_count += 1
+                avg_fit += fit_val
+
+        avg_fit /= (level_count-1)
+        print(f'total avg fit: {(avg_fit*100):.2f}%')

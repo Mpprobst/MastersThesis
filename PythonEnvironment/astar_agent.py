@@ -42,10 +42,10 @@ class AstarAgent():
     # while avoiding enemies
     def optimal_heuristic(self, env, offset=0):
         # maximize distance from enemies.
-        max_dist = util.manhattanDistance( (env.level_height-1, 0), env.goal_position )
-        total_dist = 0
-        for enemy in env.enemy_positions:
-            total_dist += max_dist - (util.manhattanDistance(env.player_position, enemy))
+        #max_dist = util.manhattanDistance( (env.level_height-1, 0), env.goal_position )
+        #total_dist = 0
+        #for enemy in env.enemy_positions:
+        #    total_dist += max_dist - (util.manhattanDistance(env.player_position, enemy))
         return offset #+ total_dist
 
     def a_star_search(self, env, heuristic):
