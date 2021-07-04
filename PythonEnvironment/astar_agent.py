@@ -59,7 +59,14 @@ class AstarAgent():
         start_time = timeit.default_timer()
         sim_env = ScavengerEnv(env.level_string(), False)
         while not open_list.isEmpty():
+            #dummy_ct = open_list.count
+            #pops = 4
+            #if open_list.count < pops:
+            #    pops = 1
+            #for i in range(pops):#round(open_list.count / 4)): # pop a quarter of the list to try to not get the optimal route
+            #    if not open_list.isEmpty():
             current_state = open_list.pop()
+            #print(f'{open_list.count} states of {dummy_ct}')
             sim_env.player_points = current_state[0][1]
             sim_env.turn = current_state[0][2]
             sim_env.update_level(current_state[0][0])

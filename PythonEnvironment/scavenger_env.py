@@ -26,7 +26,7 @@ class ScavengerEnv():
         self.verbose = verbose  # if true, print out the game
         self.level_width = 8    # number of columns in the level space (x dirextion)
         self.level_height = 8   # number of rows in the level space (y direction)
-        self.player_points = 30
+        self.player_points = 40
         self.player_position = (self.level_height-1, 0)
         self.goal_position = (0, self.level_width-1)
         self.food_positions = []

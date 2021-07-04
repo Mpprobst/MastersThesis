@@ -24,8 +24,8 @@ class GA():
         self.current_generation = []        # array of level strings currently being evalutated
         self.sequence = sequence
         self.verbose = verbose
-        training_path = "resources/training2"
-        self.tiles = [ ('-', 10), ('F', 1), ('X', 1), ('E', 1) ]
+        training_path = "resources/training3"
+        self.tiles = [ ('-', 10), ('F', 1), ('X', 3), ('E', 1) ]
         for i in range(len(sequence)):
             for j in range(len(self.tiles)):
                 if sequence[i] == self.tiles[j][0]:
