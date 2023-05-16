@@ -37,7 +37,7 @@ public class BoardManager : MonoBehaviour
 	private Transform boardHolder;                                  //A variable to store a reference to the transform of our Board object.
 	private List<Vector3> gridPositions = new List<Vector3>();   //A list of possible locations to place tiles.
 
-	// Matrix that describes the game using characters. S = Start, G = Exit, W = Wall, - = floor, E = enemy, F = food
+	// Matrix that describes the game using characters. S = Start, G = Exit, 3 = Wall (indicates wall health), - = floor, E = enemy, F = food
 	private char[][] levelInfo;
 	private Dictionary<char, GameObject[]> objectDictionary;
 
@@ -123,10 +123,10 @@ public class BoardManager : MonoBehaviour
 			Vector3 randomPosition = RandomPosition();
 
 			//Choose a random tile from tileArray and assign it to tileChoice
-			GameObject tileChoice = tileArray[Random.Range(0, tileArray.Length)];
+			//GameObject tileChoice = tileArray[Random.Range(0, tileArray.Length)];
 
 			//Instantiate tileChoice at the position returned by RandomPosition with no change in rotation
-			Instantiate(tileChoice, randomPosition, Quaternion.identity);
+			//Instantiate(tileChoice, randomPosition, Quaternion.identity);
 
 			levelInfo[Mathf.RoundToInt(randomPosition.y)][Mathf.RoundToInt(randomPosition.x)] = objectChar;
 		}
@@ -154,7 +154,7 @@ public class BoardManager : MonoBehaviour
 		objectDictionary.Add('G', exitArray);
 		objectDictionary.Add('F', foodTiles);
 		objectDictionary.Add('E', enemyTiles);
-		objectDictionary.Add('W', wallTiles);
+		objectDictionary.Add('3', wallTiles);
 
 		InitializeLevel();
 
@@ -201,52 +201,54 @@ public class BoardManager : MonoBehaviour
 	//SetupScene initializes our level and calls the previous functions to lay out the game board
 	public void SetupScene(int level)
 	{
-		InitializeLevel();
-
-		//Creates the outer walls and floor.
-		BoardSetup();
-
-		//Reset our list of gridpositions.
-		InitialiseList();
-
-		//Instantiate a random number of wall tiles based on minimum and maximum, at randomized positions.
-		LayoutObjectAtRandom(wallTiles, wallCount.minimum, wallCount.maximum, 'W');
-
-		//Instantiate a random number of food tiles based on minimum and maximum, at randomized positions.
-		LayoutObjectAtRandom(foodTiles, foodCount.minimum, foodCount.maximum, 'F');
-
-		//Determine number of enemies based on current level number, based on a logarithmic progression
-		int enemyCount = (int)Mathf.Log(level, 2f);
-
-		//Instantiate a random number of enemies based on minimum and maximum, at randomized positions.
-		LayoutObjectAtRandom(enemyTiles, enemyCount, enemyCount, 'E');
-
-		//Instantiate the exit tile in the upper right hand corner of our game board
-		Instantiate(exit, new Vector3(columns - 1, rows - 1, 0f), Quaternion.identity);
-
-		string path = Application.persistentDataPath + Path.DirectorySeparatorChar + "level_" + GameManager.instance.level + ".txt";
-		using (FileStream fs = File.Create(path))
+		for (int l = 0; l < 1000; l++)
 		{
-			for (int i = columns - 1; i >= 0; i--)
-			{
-				Byte[] info =
-					new UTF8Encoding(true).GetBytes(levelInfo[i]);
+			InitializeLevel();
 
-				// Add some information to the file.
-				fs.Write(info, 0, info.Length);
-				fs.Write(new UTF8Encoding(true).GetBytes("\n"), 0, 1);  // write nothing to act as a new line
+			//Creates the outer walls and floor.
+			//BoardSetup();
+
+			//Reset our list of gridpositions.
+			InitialiseList();
+
+			//Instantiate a random number of wall tiles based on minimum and maximum, at randomized positions.
+			LayoutObjectAtRandom(wallTiles, wallCount.minimum, wallCount.maximum, '3');
+
+			//Instantiate a random number of food tiles based on minimum and maximum, at randomized positions.
+			LayoutObjectAtRandom(foodTiles, foodCount.minimum, foodCount.maximum, 'F');
+
+			//Determine number of enemies based on current level number, based on a logarithmic progression
+			int enemyCount = Random.Range(0, 4);//(int)Mathf.Log(level, 2f);
+
+			//Instantiate a random number of enemies based on minimum and maximum, at randomized positions.
+			LayoutObjectAtRandom(enemyTiles, enemyCount, enemyCount, 'E');
+
+			//Instantiate the exit tile in the upper right hand corner of our game board
+			//Instantiate(exit, new Vector3(columns - 1, rows - 1, 0f), Quaternion.identity);
+
+			string path = Application.persistentDataPath + Path.DirectorySeparatorChar + "level_" + l + ".txt";
+			using (FileStream fs = File.Create(path))
+			{
+				for (int i = columns - 1; i >= 0; i--)
+				{
+					Byte[] info =
+						new UTF8Encoding(true).GetBytes(levelInfo[i]);
+
+					// Add some information to the file.
+					fs.Write(info, 0, info.Length);
+					fs.Write(new UTF8Encoding(true).GetBytes("\n"), 0, 1);  // write nothing to act as a new line
+				}
+			}
+			Debug.Log("Saving level to " + path);
+			using (StreamReader sr = File.OpenText(path))
+			{
+				string s = "";
+				while ((s = sr.ReadLine()) != null)
+				{
+					Console.WriteLine(s);
+				}
 			}
 		}
-		Debug.Log("Saving level to " + path);
-		using (StreamReader sr = File.OpenText(path))
-		{
-			string s = "";
-			while ((s = sr.ReadLine()) != null)
-			{
-				Console.WriteLine(s);
-			}
-		}
-
 	}
 }
 

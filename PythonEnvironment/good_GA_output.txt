@@ -1,0 +1,51 @@
+D:\Documents\_Thesis\Scavenger\PythonEnvironment>python level_generator.py --gens 2
+Event Options:
+E -> Enemies Attack
+X -> Wall Destroyed
+F -> Food Collected
+L -> Player Death
+W -> Player Win
+Complete your sequence with an end condition: W or L
+Please enter event #1: F
+Please enter event #2: W
+desired events: ['F', 'W']
+
+GENERATION 0
+compare ['F', 'W'] to ['X', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['F', 'W']. 100.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 50.00% fit
+EVAL AVG FITNESS = 31.82%
+Generation Time: 59.84
+
+GENERATION 1
+compare ['F', 'W'] to ['F', 'W']. 100.00% fit
+compare ['F', 'W'] to ['X', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['F', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'F', 'F', 'W']. 25.00% fit
+compare ['F', 'W'] to ['F', 'W']. 100.00% fit
+compare ['F', 'W'] to ['F', 'F', 'E', 'W']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['F', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'F', 'W']. 25.00% fit
+EVAL AVG FITNESS = 59.09%
+Generation Time: 39.98
+
+TESTING GENERATED LEVELS
+compare ['F', 'W'] to ['F', 'W']. 100.00% fit
+compare ['F', 'W'] to ['F', 'W']. 100.00% fit
+compare ['F', 'W'] to ['F', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['X', 'F', 'W']. 75.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'F', 'W']. 25.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'F', 'W']. 25.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'F', 'W']. 25.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 50.00% fit
+compare ['F', 'W'] to ['F', 'F', 'F', 'W']. 50.00% fit
+TRAINED AVG FITNESS = 57.50%
+Saving level 0 with fitness 100.00%
+Saving level 1 with fitness 100.00%
+Saving level 2 with fitness 75.00%
+Total Runtime: 152.32 (180s on laptop)
